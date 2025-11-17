@@ -89,11 +89,11 @@ Show the complete pipeline:
 
 ## Model Output
 
-- Output = 1: Positive.
+- **Output = 1:** Positive.
 
-- Output = 0.5: Uncertainty region.
+- **Output = 0.5:** Uncertainty region.
 
-- Output = 0: Negative.
+- **Output = 0:** Negative.
 
 ## Technical Details
 
@@ -101,9 +101,9 @@ Show the complete pipeline:
 
 **Time Complexity:**
 
-- Training: O(e * n * d)
+- **Training:** O(e * n * d)
 
-- Inferenece: O(d)
+- **Inferenece:** O(d)
 
 ## License
 
