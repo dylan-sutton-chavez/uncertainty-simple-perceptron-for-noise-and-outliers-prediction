@@ -22,9 +22,6 @@ cd aardvark-uncertainty_simple_perceptron
 
 # Instal dependecies.
 pip install -r requirements.txt
-
-# Move to the "source" file.
-cd source
 ```
 
 **Set Enviroment Variables**
