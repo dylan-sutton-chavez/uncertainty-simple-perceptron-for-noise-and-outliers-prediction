@@ -87,6 +87,8 @@ Show the complete pipeline:
 
 6. Inference and evaluation.
 
+> For production use, command-line training, and live inference, refer to the following document: "../source/README.md".
+
 ## Model Output
 
 - **Output = 1:** Positive.
