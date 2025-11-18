@@ -208,7 +208,7 @@ if __name__ == '__main__':
     """
     Run a training database preparation, and train a model with the database.
 
-    Root (cd ..):
+    Root (cd ../aardvark-uncertainty_simple_perceptron):
         python -B -m source.vectorize_and_train
     """
     EPOCHS: int = 170
@@ -236,4 +236,5 @@ if __name__ == '__main__':
     train = Train(model_hyperparameters, market_metadata, alpaca_markets_client, core_model)
 
     train.prepare_database()
+
     train.train_model()
