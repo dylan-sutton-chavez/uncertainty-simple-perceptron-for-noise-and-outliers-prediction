@@ -85,6 +85,10 @@ class Train:
         self.training_db = DuckDB(f'{market_metadata.symbol.lower()}_test.set')
         self.config_db = DuckDB(f'{market_metadata.symbol.lower()}_config.set')
 
+        self.zscore_volume_obj: ZScore = None
+        self.zscore_trade_count_obj: ZScore = None
+        self.market_metadatazscore_vwap_obj: ZScore = None
+
     def prepare_database(self):
         """
         Prepare a database to train a model (receive, vectorize, and save in JSON format).
@@ -97,23 +101,7 @@ class Train:
         """
         historical_market_bars: dict[str, any] = self.alpaca_markets_client.historical_market_bars(limit_bars=None, weeks_data_window=144)[self.market_metadata.symbol]
 
-        zscore_volume_obj = ZScore([bar.volume for bar in historical_market_bars])
-        zscore_trade_count_obj = ZScore([bar.trade_count for bar in historical_market_bars])
-        zscore_vwap_obj = ZScore([bar.vwap for bar in historical_market_bars])
-
-        zscore_config = {
-            'volume_means': zscore_volume_obj.means,
-            'volume_std': zscore_volume_obj.std,
-            
-            'trade_count_means': zscore_trade_count_obj.means,
-            'trade_count_std': zscore_trade_count_obj.std,
-
-            'vwap_means': zscore_vwap_obj.means,
-            'vwap_std': zscore_vwap_obj.std
-        }
-
-        self.config_db.truncate()
-        self.config_db.insert(zscore_config)
+        self._compute_zscore_sets(historical_market_bars)
 
         training_set: list[dict] = []
 
@@ -126,32 +114,16 @@ class Train:
             if len(raw_prices_window) < window_periods:
                 continue
 
-            price_window_range: float = bar.high - bar.low
-
-            stop_loss: float = 0.5 * price_window_range
-            take_profit: float = 1.5 * price_window_range
-
-            bar_timestamp: datetime = bar.timestamp
-            bar_formated_timestamp: str = bar_timestamp.strftime('%Y-%m-%d %H:%M %Z')
-
-            bar_volume: float = bar.volume
-            bar_trade_count: int = bar.trade_count
-            bar_vwap: float = bar.vwap
-            
-            time_series_config = TimeSeriesConfig(raw_prices_window, window_periods)
-            time_config = TimeConfig(bar_timestamp.minute + 1, bar_timestamp.hour + 1, bar_timestamp.weekday() + 1, bar_timestamp.month)
-            normalization_config = NormalizationConfig(zscore_volume_obj, bar_volume, zscore_trade_count_obj, bar_trade_count, zscore_vwap_obj, bar_vwap)
-
-            features_vector = features_vectorizer(time_series_config, time_config, normalization_config)
+            model_vectorization_dict: dict[str, any] = self._model_vectorization(bar, window_periods, raw_prices_window)
 
             entry_price = bar.close
 
-            up_take_profit_price = entry_price + take_profit
-            up_stop_loss_price = entry_price - stop_loss
+            up_take_profit_price = entry_price + model_vectorization_dict['take_profit']
+            up_stop_loss_price = entry_price - model_vectorization_dict['stop_loss']
             up_stop_loss_was_triggered = False
 
-            down_take_profit_price = entry_price - take_profit
-            down_stop_loss_price = entry_price + stop_loss
+            down_take_profit_price = entry_price - model_vectorization_dict['take_profit']
+            down_stop_loss_price = entry_price + model_vectorization_dict['stop_loss']
             down_stop_loss_was_triggered = False
 
             next_price_bars = historical_market_bars[index + 1: index + 1 + window_periods]
@@ -177,8 +149,8 @@ class Train:
                 continue
 
             vector = {
-                'timestamp': bar_formated_timestamp,
-                'vector': features_vector,
+                'timestamp': model_vectorization_dict['bar_formated_timestamp'],
+                'vector': model_vectorization_dict['features_vector'],
                 'label': bar_label
             }
 
@@ -203,6 +175,66 @@ class Train:
         dataset_name: str = self.training_db.database_file_name
 
         self.core_model.train(dataset_name, epochs, patience, learning_rate, save_model=False)
+
+    def _compute_zscore_sets(self, historical_market_bars: list[str, any]):
+        """
+        Receive a given set for the historical maket price and compute the Z-score for volume, trade count, and vwap.
+        
+        Args:
+            historical_market_bars: list[str, any] → List of market bars with dictionary information.
+            
+        Output:
+            None
+        """
+        self.zscore_volume_obj = ZScore([bar.volume for bar in historical_market_bars])
+        self.zscore_trade_count_obj = ZScore([bar.trade_count for bar in historical_market_bars])
+        self.zscore_vwap_obj = ZScore([bar.vwap for bar in historical_market_bars])
+
+        zscore_config = {
+            'volume_means': self.zscore_volume_obj.means,
+            'volume_std': self.zscore_volume_obj.std,
+            
+            'trade_count_means': self.zscore_trade_count_obj.means,
+            'trade_count_std': self.zscore_trade_count_obj.std,
+
+            'vwap_means': self.zscore_vwap_obj.means,
+            'vwap_std': self.zscore_vwap_obj.std
+        }
+
+        self.config_db.truncate()
+        self.config_db.insert(zscore_config)
+
+    def _model_vectorization(self, bar: dict[str, any], window_periods: int, raw_prices_window: list[float]):
+        """
+        Receive the current market bar, and compute the whole vector, stop loss, time stamp, and take profit.
+
+        Args:
+            bar: dict[str, any] → Current market bar to compute.
+            window_periods: int → A integer defining the length of the market window.
+            raw_prices_window: list[float] → One vector with the window prices.
+
+        Output:
+            dict[str, any] → A dictionary returning the take profit, stop loss, time stamp, and the features vector
+        """
+        price_window_range: float = bar.high - bar.low
+
+        stop_loss: float = 0.5 * price_window_range
+        take_profit: float = 1.5 * price_window_range
+
+        bar_timestamp: datetime = bar.timestamp
+        bar_formated_timestamp: str = bar_timestamp.strftime('%Y-%m-%d %H:%M %Z')
+
+        bar_volume: float = bar.volume
+        bar_trade_count: int = bar.trade_count
+        bar_vwap: float = bar.vwap
+        
+        time_series_config = TimeSeriesConfig(raw_prices_window, window_periods)
+        time_config = TimeConfig(bar_timestamp.minute + 1, bar_timestamp.hour + 1, bar_timestamp.weekday() + 1, bar_timestamp.month)
+        normalization_config = NormalizationConfig(self.zscore_volume_obj, bar_volume, self.zscore_trade_count_obj, bar_trade_count, self.zscore_vwap_obj, bar_vwap)
+
+        features_vector = features_vectorizer(time_series_config, time_config, normalization_config)
+
+        return {'take_profit': take_profit, 'stop_loss': stop_loss, 'bar_formated_timestamp': bar_formated_timestamp, 'features_vector': features_vector}
 
 if __name__ == '__main__':
     """
