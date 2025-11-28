@@ -82,7 +82,7 @@ def run_system():
             side=OrderSide.BUY,
             time_in_force=TimeInForce.DAY,
             take_profit=TakeProfitRequest(limit_price=last_bar_close_price + vectorized_last_window_bars['take_profit']),
-            stop_loss=StopLossRequest(limit_price=last_bar_close_price - vectorized_last_window_bars['stop_loss'])
+            stop_loss=StopLossRequest(stop_price=last_bar_close_price - vectorized_last_window_bars['stop_loss'])
         )
         alpaca_trading_client.submit_order(order)
 
@@ -93,7 +93,7 @@ def run_system():
             side=OrderSide.SELL,
             time_in_force=TimeInForce.DAY,
             take_profit=TakeProfitRequest(limit_price=last_bar_close_price - vectorized_last_window_bars['take_profit']),
-            stop_loss=StopLossRequest(limit_price=last_bar_close_price + vectorized_last_window_bars['stop_loss'])
+            stop_loss=StopLossRequest(stop_price=last_bar_close_price + vectorized_last_window_bars['stop_loss'])
         )
         alpaca_trading_client.submit_order(order)
 
