@@ -80,9 +80,8 @@ if __name__ == '__main__':
     execution_minutes: list[int] = [0, 15, 30, 45]
 
     while True:
-
         current_time = datetime.now(UTC)
-        minute = current_time
+        minute = current_time.minute
 
         if minute in execution_minutes:
 
