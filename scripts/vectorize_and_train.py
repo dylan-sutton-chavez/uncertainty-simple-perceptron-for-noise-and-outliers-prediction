@@ -116,12 +116,13 @@ class VectorizeAndTrain:
             
         Output:
             dict[str, any] → A dictionary returning the take profit, stop loss, time stamp, and the features vector.
+            float → The close price of the last bar.
         """
         raw_window = self.alpaca_markets_client.last_window_bars()[MARKET_SYMBOL]
         raw_prices_window: list[float] = [bar_dict.close for bar_dict in raw_window]
         bar = raw_window[-1]
 
-        return self._model_vectorization(bar, raw_prices_window)
+        return self._model_vectorization(bar, raw_prices_window), bar.close
 
     def _compute_zscore_sets(self, historical_market_bars: list[str, any]):
         """
@@ -190,5 +191,5 @@ if __name__ == '__main__':
 
     model = vectorize_and_train.core_model
 
-    vectorized_last_window_bars = vectorize_and_train.vectorized_last_window_bars()
+    vectorized_last_window_bars, _ = vectorize_and_train.vectorized_last_window_bars()
     print(vectorized_last_window_bars)

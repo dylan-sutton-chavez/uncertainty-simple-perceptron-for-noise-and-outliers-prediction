@@ -18,6 +18,8 @@ from scripts.vectorize_and_train import VectorizeAndTrain
 
 from config.settings import MARKET_SYMBOL, EPSILON
 
+from alpaca.trading.client import TradingClient
+
 from time import perf_counter
 from os import getenv
 from datetime import datetime, UTC
@@ -25,7 +27,16 @@ from psutil import cpu_percent, virtual_memory
 from requests import post
 from json import dumps
 
-alpaca_markets_client = AlpacaMarkets(getenv('ALPACA_KEY'), getenv('ALPACA_SECRET'), MARKET_SYMBOL)
+from alpaca.trading.client import TradingClient
+from alpaca.trading.requests import MarketOrderRequest, StopLossRequest, TakeProfitRequest
+from alpaca.trading.enums import OrderSide, TimeInForce
+
+alpaca_key: str = getenv('ALPACA_KEY')
+alpaca_secret: str = getenv('ALPACA_SECRET')
+
+alpaca_markets_client = AlpacaMarkets(alpaca_key, alpaca_secret, MARKET_SYMBOL)
+
+alpaca_trading_client = TradingClient(alpaca_key, alpaca_secret, paper=True) # You can replaca the paper trading from True or False.
 
 better_stack_host: str = getenv('BETTER_STACK_HOST')
 better_stack_token: str = getenv('BETTER_STACK_TOKEN')
@@ -39,7 +50,7 @@ def run_system():
     vectorize_and_train.train_model()
 
     model: UncertaintySimplePerceptron = vectorize_and_train.core_model
-    vectorized_last_window_bars = vectorize_and_train.vectorized_last_window_bars()
+    vectorized_last_window_bars, last_bar_close_price = vectorize_and_train.vectorized_last_window_bars()
 
     pred, net_pred = model.inference(vectorized_last_window_bars['features_vector'], EPSILON)
 
@@ -63,6 +74,28 @@ def run_system():
     }
 
     post(better_stack_host, headers=headers, data=dumps(model_log), timeout=4)
+
+    if pred == 1:
+        order = MarketOrderRequest(
+            symbol=MARKET_SYMBOL, 
+            qty=1,
+            side=OrderSide.BUY,
+            time_in_force=TimeInForce.DAY,
+            take_profit=TakeProfitRequest(last_bar_close_price + vectorized_last_window_bars['take_profit']),
+            stop_loss=StopLossRequest(last_bar_close_price - vectorized_last_window_bars['stop_loss'])
+        )
+        alpaca_trading_client.submit_order(order)
+
+    if pred == 0:
+        order = MarketOrderRequest(
+            symbol=MARKET_SYMBOL, 
+            qty=1,
+            side=OrderSide.SELL,
+            time_in_force=TimeInForce.DAY,
+            take_profit=TakeProfitRequest(last_bar_close_price - vectorized_last_window_bars['take_profit']),
+            stop_loss=StopLossRequest(last_bar_close_price + vectorized_last_window_bars['stop_loss'])
+        )
+        alpaca_trading_client.submit_order(order)
 
 if __name__ == '__main__':
     """
@@ -89,3 +122,10 @@ if __name__ == '__main__':
             sleep(60 * (MINUTES_WINDOW - 1)) # Wait a few minutes to avoid overloading the CPU.
 
         sleep(0.001)
+
+r"""
+$env:ALPACA_SECRET="B1n8AqUnKayKo8NnixEUtQkUre1TkwdXJghBkH4vCh2q"
+$env:BETTER_STACK_HOST="https://s1609733.eu-nbg-2.betterstackdata.com"
+$env:BETTER_STACK_TOKEN="maMbwuWe2QR954AkKw9Xb7Tc"
+$env:ALPACA_KEY="PK2VPMKJ6OSJNJZLOEI2SN3KHB"
+"""
