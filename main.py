@@ -43,11 +43,11 @@ def run_system():
 
     pred, net_pred = model.inference(vectorized_last_window_bars['features_vector'], EPSILON)
 
-    latency_ms: float = start_ms - perf_counter()
+    latency_ms: float = perf_counter() - start_ms
 
     model_log = {
         "timestamp": str(datetime.now(UTC)),
-        "latency_ms": latency_ms,
+        "latency_s": latency_ms / 1000,
         "symbol": MARKET_SYMBOL,
         "model_prediction": pred,
         "net_prediction": net_pred,
