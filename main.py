@@ -89,10 +89,3 @@ if __name__ == '__main__':
             sleep(60 * (MINUTES_WINDOW - 1)) # Wait a few minutes to avoid overloading the CPU.
 
         sleep(0.001)
-
-r"""
-$env:ALPACA_SECRET="B1n8AqUnKayKo8NnixEUtQkUre1TkwdXJghBkH4vCh2q"
-$env:BETTER_STACK_HOST="https://s1609733.eu-nbg-2.betterstackdata.com"
-$env:BETTER_STACK_TOKEN="maMbwuWe2QR954AkKw9Xb7Tc"
-$env:ALPACA_KEY="PK2VPMKJ6OSJNJZLOEI2SN3KHB"
-"""
