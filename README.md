@@ -85,8 +85,8 @@ $ export ALPACA_KEY="a1b2c3d4e5f6g7h8i9j0"
 $ export ALPACA_SECRET="a1b2c3d4e5f6g7h8i9j0"
 
 # Initialize the Better Stack enviroment variables (Source → Logs → Python).
-$ BETTER_STACK_HOST="a1b2c3d4e5f6g7h8i9j0"
-$ BETTER_STACK_TOKEN="a1b2c3d4e5f6g7h8i9j0"
+$ export BETTER_STACK_HOST="a1b2c3d4e5f6g7h8i9j0"
+$ export BETTER_STACK_TOKEN="a1b2c3d4e5f6g7h8i9j0"
 ```
 
 ## Persistence System Launching
