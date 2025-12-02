@@ -94,7 +94,7 @@ $ export BETTER_STACK_TOKEN="a1b2c3d4e5f6g7h8i9j0"
 
 ```bash
 # Allows the continious runing even after the terminal session is closed (run the program as a package '-m' and without 'byte-compile' -B).
-$ nohup python -B -m main
+$ nohup python3 -B -m main
 ```
 
 ## System Reboot Command
@@ -107,4 +107,5 @@ $ sudo reboot
 ## Proprietary Agreement License
 
 The software is licensed under a proprietary agreement, maintaining closed source distribution.
+
 
