@@ -4,11 +4,11 @@
 
 ## Key System Concepts
 
-- **Uncertainty Step Function:** Three-state outputs (0.0, 0.5, 1.0) whit configurable epsilon (ε) threshold: $ℎ(𝑥) = 0.0 (𝑥 < − ε), 0. 5 (− ε ≤ 𝑥 ≤ ε), 1.0 (𝑥 > ε)$.
+- **Uncertainty Step Function:** Three-state outputs (0.0, 0.5, 1.0) with configurable epsilon (ε) threshold: $ℎ(𝑥) = 0.0 (𝑥 < − ε), 0. 5 (− ε ≤ 𝑥 ≤ ε), 1.0 (𝑥 > ε)$.
 
 - **Early Stopping:** Built-in patience-based early stopping to prevent overfitting.
 
-- **Model Persistence:** JSON and object based models saving, with metadata and timestamps.
+- **Object Based:** JSON and object based models saving, with metadata and timestamps.
 
 - **Fine-tuning Capabilities:** Support for loading and continuing from saved models.
 
@@ -20,7 +20,7 @@
 
 - **Indicators:** Compute technical indicators (Stochastic Oscillator, RSI, EMA).
 
-- **Z-Score:** Normalize a given value, whit a vector using the Z-Score standarization.
+- **Z-Score:** Normalize a given value, within a vector using the Z-Score standardization.
 
 - **Pipeline:** Combine all feature encoders into an unifed vector.
 
@@ -28,22 +28,22 @@
 
 - **Alpaca Client:** API client wrapper for ferching historical and real-time market data.
 
-- **Peristency:** Lightweight JSON-inline lazy loading database for storing of data.
+- **Persistence:** Lightweight JSON-inline lazy loading database for storing of data.
 
 **Obervability and Monitoring**
 
-- **Better Stack:** An observability and monitoring plataform, that combine graphs, logs, incidents managment, and machine learning.
+- **Better Stack:** An observability and monitoring platform, that combine graphs, logs, incidents management, and machine learning.
 
 ## Cloud Service Managment
 
-The cloud provider plataform that use this architecture is Amazon Web Services (AWS) whit the Operative System of Ubuntu. You can use Remote SSH to manage your server in Visual Studio Code (VSC). For preference use an AWS in the region of 'us-east-1', because the nearest and more important stock exchange its in New York.
+The cloud provider platform that uses this architecture is Amazon Web Services (AWS) with the Ubuntu Operating System. You can use Remote SSH to manage your server in Visual Studio Code (VSC). For preference use an AWS in the region of 'us-east-1', because the nearest and more important stock exchange is in New York.
 
 ```bash
 # Update the package list to ensure the correct managment.
 $ sudo apt update
 
 # Install the last python3 aviable version and verify the installation.
-$ sudo apt install python3
+$ apt install python3
 $ python3 --version
 
 # Install the pip packages manager and the build essentials.
@@ -63,7 +63,7 @@ Password for 'https://your-github-user@github.com': personal-acess-token
 
 # Move to the cloned GitHub repository and create the file for the datasets.
 $ cd aardvark-package
-$ mkdir datasetes
+$ mkdir datasets
 ```
 
 > How to Obtain the Personal Acess Token (PAC): GitHub Website → Settings → Developer Settings → Personal Acess Tokens → Tokens (Classic) → Generate New Token.
@@ -75,7 +75,7 @@ $ mkdir datasetes
 
 ```bash
 # Install the libraries of the system.
-$ sudo pip install -r requirements
+$ pip install -r $ requirements.txt
 ```
 
 ## Enviroment Initialization
@@ -107,4 +107,3 @@ $ sudo reboot
 ## Proprietary Agreement License
 
 The software is licensed under a proprietary agreement, maintaining closed source distribution.
-
