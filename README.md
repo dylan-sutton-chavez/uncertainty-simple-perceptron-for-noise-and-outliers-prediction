@@ -72,6 +72,7 @@ $ mkdir datasets
 
 - numpy: 2.3.4
 - alpaca-py: 0.43.2
+- psutil: 7.1.3
 
 ```bash
 # Install the libraries of the system.
@@ -107,5 +108,6 @@ $ sudo reboot
 ## Proprietary Agreement License
 
 The software is licensed under a proprietary agreement, maintaining closed source distribution.
+
 
 
