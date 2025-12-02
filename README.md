@@ -76,7 +76,7 @@ $ mkdir datasets
 
 ```bash
 # Install the libraries of the system.
-$ pip install -r $ requirements.txt
+$ pip install -r requirements.txt
 ```
 
 ## Enviroment Initialization
