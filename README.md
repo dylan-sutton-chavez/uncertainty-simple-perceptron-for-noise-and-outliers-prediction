@@ -36,7 +36,7 @@
 
 ## Cloud Service Managment
 
-The cloud provider platform that uses this architecture is Amazon Web Services (AWS) with the Ubuntu Operating System. You can use Remote SSH to manage your server in Visual Studio Code (VSC). For preference use an AWS in the region of 'us-east-1', because the nearest and more important stock exchange is in New York.
+The cloud provider platform that uses this architecture is Amazon Web Services (AWS) with the Ubuntu Operating System. You can use Remote SSH to manage your server in Visual Studio Code (VSC). For preference use an AWS in the region of 'us-east-1' and minimum an t2.small, because the nearest and more important stock exchange is in New York.
 
 ```bash
 # Update the package list to ensure the correct managment.
