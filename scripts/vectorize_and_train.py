@@ -123,11 +123,11 @@ class VectorizeAndTrain:
         try:
             data = raw_window[MARKET_SYMBOL]
 
-            if len(data) < WINDOW_PERIODS:
-                print(data)
+            raw_prices_window: list[float] = [bar_dict.close for bar_dict in data]
+
+            if len(raw_prices_window) < MARKET_SYMBOL:
                 return None
 
-            raw_prices_window: list[float] = [bar_dict.close for bar_dict in data]
             bar = data[-1]
 
             return {"vector": self._model_vectorization(bar, raw_prices_window), "last_close_price": bar.close}
