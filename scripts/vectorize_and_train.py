@@ -133,7 +133,7 @@ class VectorizeAndTrain:
             return {"vector": self._model_vectorization(bar, raw_prices_window), "last_close_price": bar.close}
 
         except:
-            None
+            return None
 
     def _compute_zscore_sets(self, historical_market_bars: list[str, any]):
         """
