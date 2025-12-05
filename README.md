@@ -94,8 +94,8 @@ $ export BETTER_STACK_TOKEN="a1b2c3d4e5f6g7h8i9j0"
 ## Persistence System Launching
 
 ```bash
-# Allows the process to keep running continuously even after the terminal session closes (nohup) in asynchronous (&) — (run the program as a package '-m' and without 'byte-compile' -B).
-$ nohup python3 -B -m main &
+# Allows the process to keep running continuously even after the terminal session closes (nohup) — (run the program as a package '-m' and without 'byte-compile' -B).
+$ nohup python3 -B -m main
 ```
 
 ## System Reboot and Python Analysis Command
