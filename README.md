@@ -94,8 +94,8 @@ $ export BETTER_STACK_TOKEN="a1b2c3d4e5f6g7h8i9j0"
 ## Persistence System Launching
 
 ```bash
-# Allows the process to keep running continuously even after the terminal session closes (nohup) — (run the program as a package '-m' and without 'byte-compile' -B).
-$ nohup python3 -B -m main
+# Allows the process to keep running continuously even after the terminal session closes (nohup) — (run the program as a package '-m', without 'byte-compile' -B and desactivate the cache buffering '-u').
+$ nohup python3 -u -B -m main
 ```
 
 ## System Reboot and Python Analysis Command
@@ -108,13 +108,16 @@ $ sudo reboot
 $ ps aux | grep "python3"
 
 # Terminate all active Python 3 processes.
-$ pkill -f python3
+$ sudo pkill -f python3
 
 # Remove the local repository ONLY if you intentionally want a fresh clone (delete all contents → -rf).
 $ rm -rf aardvark-package
 
-# Shows contents of file in output.
+# Shows all the content of a file and print in the output.
 $ cat <file-name>
+
+# Read the last ten lines of a file and print in the output. It runs in real time, monitoring changes and printing them in the output.
+$ tail -f <file-name>
 ```
 
 ## Proprietary Agreement License
