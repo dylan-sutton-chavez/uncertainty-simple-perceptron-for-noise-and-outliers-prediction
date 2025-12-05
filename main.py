@@ -93,10 +93,10 @@ class AardvarkObject:
 
         model_log = {
             "timestamp": str(datetime.now(UTC)),
-            "latency_seconds": latency,
+            "latency_seconds": round(latency, 7),
             "symbol": MARKET_SYMBOL,
             "model_prediction": pred,
-            "net_prediction": net_pred,
+            "net_prediction": round(net_pred, 7),
             "os_health": {
                 "cpu_load": cpu_percent(0.5),
                 "cache_memmory": virtual_memory().percent
