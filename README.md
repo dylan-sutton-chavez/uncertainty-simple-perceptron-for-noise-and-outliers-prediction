@@ -110,8 +110,11 @@ $ ps aux | grep "python3"
 # Terminate all active Python 3 processes.
 $ pkill -f python3
 
-# Remove the local repository ONLY if you intentionally want a fresh clone.
+# Remove the local repository ONLY if you intentionally want a fresh clone (delete all contents → -rf).
 $ rm -rf aardvark-package
+
+# Shows contents of file in output.
+$ cat <file-name>
 ```
 
 ## Proprietary Agreement License
