@@ -127,4 +127,3 @@ The software is licensed under a proprietary agreement, maintaining closed sourc
 ## Backtest
 
 The system has been tested in: backtest.pdf. Some libraries/packages have been renamed or refactored within the repository, but the math is the same.
-
