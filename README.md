@@ -1,4 +1,4 @@
-# Uncertainty-Aware Simple Perceptron
+# Uncertainty Simple Perceptron
 
 > A linear perceptron leveraging Cover's Theorem via high-dimensional vectorization. It employs a modified step function with a defined epsilon threshold to quantify uncertainty, effectively filtering dataset noise. This document describes the architecture and usage in production.
 
