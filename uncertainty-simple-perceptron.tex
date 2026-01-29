@@ -129,7 +129,7 @@ $$
 
 The proposed formula to compute model uncertainty begins by defining an external margin to calibrate the model sensitivity ($\Delta$), obtained by multiplying the ratio of the standard deviation ($\sigma$) to the error rate—scaled between 0 and 1 ($\text{E}$). 
 
-This function, based on a Gaussian formulation, adjusts the confidence of the model as a function of the observed error rate ($\text{E} = (\text{Number of Errors in Training} / \text{Total Attempts}) * 100\%$) when the error rate is low, the predictions of the model become more reliable; conversely, higher error rates indicate a reduced confidence.
+This function, based on a Gaussian formulation, adjusts the confidence of the model as a function of the observed error rate ($\text{E} = (\text{Number of Errors in Training} / \text{Total Attempts}) \cdot 100\%$) when the error rate is low, the predictions of the model become more reliable; conversely, higher error rates indicate a reduced confidence.
 
 $$
 \epsilon = \Delta \cdot \sigma \cdot Z_{(1 - \frac{E}{2})}
@@ -251,10 +251,10 @@ Hereafter, the section presents all the results obtained from experiments conduc
         \hline
         Dataset ID & Volatility Profile ($\sigma$) & Duration (yrs)\\
         \hline
-        Type I & $\sigma \approx 0.58$ & 2.75\\
-        Type II & $\sigma \approx 0.31$ & 9.5\\
-        Type III & $\sigma \approx 0.23$ & 7.3\\
-        Type IV & $\sigma \approx 0.26$ & 2.9\\
+        Type I & $0.58$ & $2.75$\\
+        Type II & $0.31$ & $9.5$\\
+        Type III & $0.23$ & $7.3$\\
+        Type IV & $0.26$ & $2.9$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
         Sampled at 15-minute time steps. $\sigma$ represents the annualized standard deviation of the dataset, for the noisy density. Type I: TSLA, Type II: GOOGL, Type III: Eli Lilly, Type IV: APPL.
@@ -270,10 +270,10 @@ Hereafter, the section presents all the results obtained from experiments conduc
         \hline
         Dataset Type & Time (seconds) & Training Vectors\\
         \hline
-        Type I & $\approx3.34$ sec & $\approx40000$\\
-        Type II & $\approx9.44$ sec & $\approx110000$\\
-        Type III & $\approx6.14$ sec & $\approx80000$\\
-        Type IV & $\approx3.74$ sec & $\approx37000$\\
+        Type I & $3.34$ sec & $40000$\\
+        Type II & $9.44$ sec & $110000$\\
+        Type III & $6.14$ sec & $80000$\\
+        Type IV & $3.74$ sec & $37000$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
         Obtained results include processing and prepossessing time, during the training.
@@ -287,34 +287,53 @@ Hereafter, the section presents all the results obtained from experiments conduc
     \label{tab:Total-Accuracy-Sequential-Set}
     \begin{tabular}{c c}
         \hline
-        Dataset Type & Total Accuracy\\
+        Dataset Type & Total Accuracy ($\%$)\\
         \hline
-        Type I & $\approx56.1\%$\\
-        Type II & $\approx55.31\%$\\
-        Type III & $\approx56.34\%$\\
-        Type IV & $\approx56.84\%$\\
+        Type I & $56.1$\\
+        Type II & $55.31$\\
+        Type III & $56.34$\\
+        Type IV & $56.84$\\
         \hline
         \multicolumn{2}{p{0.9\linewidth}}{\centering
-        Dataset was split into approximately $\approx\%73$ for training, corresponding to approximately $\approx\%27$ for testing.
+        Dataset was split into $73\%$ for training, corresponding to $27\%$ for testing.
         }
     \end{tabular}
 \end{table}
 
 \begin{table}[H]
     \centering
-    \caption{Uncertainty Accuracy (proportion of coverage:accuracy)}
-    \label{tab:Uncertainty-Accuracy}
+    \caption{Uncertainty Accuracy in a Small Coverage}
+    \label{tab:Uncertainty-Accuracy-Small}
     \begin{tabular}{c c c}
         \hline
-        Dataset Type & Small Coverage & Medium Coverage\\
+        Dataset Type & Coverage ($\%$) & Accuracy ($\%$)\\
         \hline
-        Type I & $\approx17\%:\approx97\%$ & $\approx47\%:\approx68\%$\\
-        Type II & $\approx23\%:\approx93\%$ & $\approx43\%:\approx67\%$\\
-        Type III & $\approx21\%:\approx89\%$ & $\approx52\%:\approx68\%$\\
-        Type IV & $\approx23\%:\approx93\%$ & $\approx42\%:\approx69\%$\\
+        Type I & $17$ & $97$\\
+        Type II & $23$ & $93$\\
+        Type III & $21$ & $89$\\
+        Type IV & $23$ & $93$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        The section presents the coverage and accuracy obtained on that data partition after incorporating the uncertainty function, using different sensibilities.
+        Overview of the performance achieved on the low-coverage data, illustrating the impact of the uncertainty function across different sensitivity thresholds.
+        }
+    \end{tabular}
+\end{table}
+
+\begin{table}[H]
+    \centering
+    \caption{Uncertainty Accuracy in a Medium Coverage}
+    \label{tab:Uncertainty-Accuracy-Medium}
+    \begin{tabular}{c c c}
+        \hline
+        Dataset Type & Coverage ($\%$) & Accuracy ($\%$)\\
+        \hline
+        Type I & $47$ & $68$\\
+        Type II & $43$ & $67$\\
+        Type III & $52$ & $68$\\
+        Type IV & $42$ & $69$\\
+        \hline
+        \multicolumn{3}{p{0.9\linewidth}}{\centering
+        Performance summary for the medium-coverage scenario, showing how accuracy adjusts when the uncertainty function is applied.
         }
     \end{tabular}
 \end{table}
@@ -333,12 +352,12 @@ For data preparation, N-grams were used and a corresponding scale was created to
     \label{tab:NLP-SemEval}
     \begin{tabular}{c c c}
         \hline
-        Category & Accuracy & Other\\
+        Metric & Value & Other\\
         \hline
-        Total Coverage & $\approx69.4\%$ & N/A\\
-        Selected Coverage & $93.7\%$ & $\approx79.3\%$ Coverage\\
+        Total Coverage & $69.4\%$ & N/A\\
+        Selected Coverage & $93.7\%$ & $79.3\%$ Coverage\\
         Model Dimensions & 1080 & N/A\\
-        Training Time & $\approx9$ sec & N/A\\
+        Training Time & $9$ sec & N/A\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
         The section presents the total coverage, selected, model dimensions (in this case, the dimensionality corresponds to the number of n-grams or bag-of-words features) and training time.
@@ -362,22 +381,22 @@ The proposed model demonstrated exceptional efficiency in this domain, effective
     \label{tab:NASA-Results}
     \begin{tabular}{c c c}
         \hline
-        Category & Accuracy & Other\\
+        Metric & Value & Other\\
         \hline
-        Total Coverage & $\approx79.4\%$ & N/A\\
-        Selected Coverage & $94.7\%$ & $\approx40\%$ Coverage\\
+        Total Coverage & $79.4\%$ & N/A\\
+        Selected Coverage & $94.7\%$ & $40\%$ Coverage\\
         Model Dimensions & 14 & N/A\\
-        Training Time & $\approx6.4$ sec & N/A\\
+        Training Time & $6.4$ sec & N/A\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        By rejecting uncertain samples during the transient degradation phase, the model achieves near-perfect accuracy in confirmed states, acting as a robust low-power early warning system.
+        By rejecting uncertain samples during the transient degradation phase, the model achieves near-perfect accuracy in confirmed states, acting as a robust low-power early warning system.$\mathbf{79.3\%\text{ Cov.} \ \& \ 93.7\%\text{ Acc.}}$
         }
     \end{tabular}
 \end{table}
 
 \section{Used Hardware}
 
-The hardware used during training consisted of a single 64-bit CPU core and approximately $\approx 1$ MB of RAM. During the inference phase, the model used only $\approx 1$ KB of memory, since it did not need to load the data set into memory.
+The hardware used during training consisted of a single 64-bit CPU core and $\approx 1$ MB of RAM. During the inference phase, the model used only $\approx 1$ KB of memory, since it did not need to load the data set into memory.
 
 Similarly, the model was tested on a t2.micro server within the AWS architecture. Running on this hardware, the same resource usage metrics were observed.
 
@@ -393,9 +412,9 @@ The primary distinction of the proposed model lies in its reduced time complexit
         \hline
         Stage & Time Complexity & Memory Space\\
         \hline
-        Training & $\mathcal{O}(e * n * d)$ & $\mathcal{O}(d)$\\
+        Training & $\mathcal{O}(e \cdot n \cdot d)$ & $\mathcal{O}(d)$\\
         Inference & $\mathcal{O}(d)$ & $\mathcal{O}(d)$\\
-        Input Vector & $\mathcal{O}(d * l)$ & $\mathcal{O}(d)$\\
+        Input Vector & $\mathcal{O}(d \cdot l)$ & $\mathcal{O}(d)$\\
         Uncertainty Function & $\mathcal{O}(1)$ & $\mathcal{O}(1)$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
@@ -418,12 +437,12 @@ The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}
         \hline
         Model & Training & Inference\\
         \hline
-        Proposed & $\mathcal{O}(e * n * d)$ & $\mathcal{O}(d)$\\
-        Bonsai & $\mathcal{O}(e * n * d  * depth)$ & $\mathcal{O}(d * depth)$\\
-        FastGRNN & $\mathcal{O}(e * n * d * l)$ & $\mathcal{O}(d * l)$\\
-        ProtoNN & $\mathcal{O}(e * n * d * k)$ & $\mathcal{O}(d * k)$\\
-        Linear SVM & $\mathcal{O}(n^2 * d)$ & $\mathcal{O}(d)$\\
-        Standard LSTM & $\mathcal{O}(e * n * l * d^2)$ & $\mathcal{O}(l * d^2)$\\
+        Proposed & $\mathcal{O}(e \cdot n \cdot d)$ & $\mathcal{O}(d)$\\
+        Bonsai & $\mathcal{O}(e \cdot n \cdot d  \cdot depth)$ & $\mathcal{O}(d \cdot depth)$\\
+        FastGRNN & $\mathcal{O}(e \cdot n \cdot d \cdot l)$ & $\mathcal{O}(d \cdot l)$\\
+        ProtoNN & $\mathcal{O}(e \cdot n \cdot d \cdot k)$ & $\mathcal{O}(d \cdot k)$\\
+        Linear SVM & $\mathcal{O}(n^2 \cdot d)$ & $\mathcal{O}(d)$\\
+        Standard LSTM & $\mathcal{O}(e \cdot n \cdot l \cdot d^2)$ & $\mathcal{O}(l \cdot d^2)$\\
         \hline
     \end{tabular}
 \end{table}
@@ -436,12 +455,12 @@ The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}
         \hline
         Model & Space in Memory (RAM) & Latency\\
         \hline
-        Proposed & $\approx1$ KB & $\approx9$ ms\\
-        Bonsai & $\approx4.5$ KB & $\approx13$ ms\\
-        FastGRNN & $\approx47$ KB & $\approx12$ ms\\
-        ProtoNN & $\approx16$ KB & $\approx13$ ms\\
-        Linear SVM & $\approx2$ KB & $\approx10$ ms\\
-        Standard LSTM & $>500$ KB & $\approx13$ sec\\
+        Proposed & $1$ KB & $9$ ms\\
+        Bonsai & $4.5$ KB & $13$ ms\\
+        FastGRNN & $47$ KB & $2$ ms\\
+        ProtoNN & $16$ KB & $13$ ms\\
+        Linear SVM & $2$ KB & $10$ ms\\
+        Standard LSTM & $>500$ KB & $13$ sec\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
         Benchmarks were conducted on a constrained virtualized environment (single-core 64-bit CPU, 1 MB RAM limit) to simulate resource scarcity in embedded systems. The reported latency included the time required for feature preprocessing.
@@ -455,14 +474,14 @@ The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}
     \label{tab:NLP-SemEval-Comparation}
     \begin{tabular}{c c c}
         \hline
-        Model & Total Accuracy & Selected:Accuracy\\
+        Model & Total Accuracy & Coverage/Accuracy\\
         \hline
-        Proposed & $\approx69.4\%$ & $\approx79.3\%:\approx93.7\%$\\
-        Bonsai & $\approx69.8\%$ & N/A\\
-        FastGRNN & $\approx70.8\%$ & N/A\\
-        ProtoNN & $\approx68.4\%$ & N/A\\
-        Linear SVM & $\approx67.2\%$ & N/A\\
-        Standard LSTM & $\approx70.1\%$ & N/A\\
+        Proposed & $69.4\%$ & $79.3\%$ Cov. and $93.7\%$ Acc.\\
+        Bonsai & $69.8\%$ & N/A\\
+        FastGRNN & $70.8\%$ & N/A\\
+        ProtoNN & $68.4\%$ & N/A\\
+        Linear SVM & $67.2\%$ & N/A\\
+        Standard LSTM & $70.1\%$ & N/A\\
         \hline
     \end{tabular}
 \end{table}
@@ -487,7 +506,7 @@ Preliminary experiments with this feedback loop in OWASP datasets suggest that i
 
 \section{Conclusion}
 
-This work presents an uncertainty-aware linear perceptron designed for extreme edge constraints. The model demonstrates a training complexity of $\mathcal{O}(e * n * d)$ and a constant inference cost of $\mathcal{O}(d)$, using approximately 1 KB of memory. Furthermore, feature preprocessing remains efficient with an average complexity of $\mathcal{O}(n)$, allowing operation within 100-byte buffers. The results illustrate Cover's theorem in practice, effectively filtering noise in high-entropy environments. 
+This work presents an uncertainty-aware linear perceptron designed for extreme edge constraints. The model demonstrates a training complexity of $\mathcal{O}(e \cdot n \cdot d)$ and a constant inference cost of $\mathcal{O}(d)$, using $\approx 1$ KB of memory. Furthermore, feature preprocessing remains efficient with an average complexity of $\mathcal{O}(n)$, allowing operation within 100-byte buffers. The results illustrate Cover's theorem in practice, effectively filtering noise in high-entropy environments. 
 
 Crucially, this shows that the model's objective is not universal coverage but rather achieving high precision ($>90\%$) through selective coverage. This approach offers orders-of-magnitude reductions in computational costs compared to RNNs, proving that robust feature engineering coupled with selective linearity is a viable path for reliable TinyML.
 
