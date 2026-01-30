@@ -24,7 +24,7 @@
 \begin{abstract}
 This paper addresses the challenge of deploying uncertainty-aware models in resource-constrained tiny machine learning environments. While state-of-the-art architectures, such as long short-term memory networks and transformers, provide high representational capacity, their inference overhead and memory requirements are often prohibitive for edge applications. This work develops a computationally efficient alternative: a modified linear perceptron featuring an adaptive selective prediction mechanism. 
 
-By defining a geometric abstention region $[-\epsilon, \epsilon]$ around the decision hyperplane, the model introduces a confidence-aware mechanism and selectively rejects low-confidence samples. Unlike static margin classifiers, the proposed $\epsilon$ parameter is derived from statistical properties estimated during training and calibration, and it remains fixed during inference, preserving constant-time complexity $\mathcal{O}(d)$.
+By defining a geometric abstention region $[-\epsilon, \epsilon]$ around the decision hyperplane, the model introduces a confidence-aware mechanism and selectively rejects low-confidence samples. Unlike static margin classifiers, the proposed $\epsilon$ parameter is derived from statistical properties estimated during training and calibration \cite{b14}, and it remains fixed during inference, preserving constant-time complexity $\mathcal{O}(d)$.
 
 The framework was evaluated across several high-entropy scenarios, including nonstationary financial time series, sentiment analysis using the Semantic Evaluation dataset, and industrial fault detection based on the National Aeronautics and Space Administration Industrial Machine Surveillance bearing dataset. Experimental results demonstrated that the model achieved an inference memory footprint of $\approx 1$ KB and orders of magnitude lower computational overhead than recurrent neural networks. 
 
@@ -37,13 +37,13 @@ tiny machine learning, simple perceptron, uncertainty quantification, selective 
 
 \section{Introduction}
 
-Modern machine learning models comprise multiple algebraic transformations (i.e., hidden layers) and exhibit a time complexity greater than $\mathcal{O}(d)$ per prediction, resulting in high computational costs during training, inference, and fine-tuning, particularly in embedded edge applications.
+Modern machine learning models comprise multiple algebraic transformations (i.e., hidden layers) \cite{b15} and exhibit a time complexity greater than $\mathcal{O}(d)$ per prediction, resulting in high computational costs during training, inference, and fine-tuning, particularly in embedded edge applications.
 
 Such models identify patterns in raw data by applying geometric transformations \cite{b2}, processing the input layer by layer to extract increasingly abstract representations.
 
 By contrast, feature learning can be replaced by feature engineering, where mathematical formulations are employed to encode relevant structures directly, rather than relying on hidden layers for representation learning. For example, periodic structures can be efficiently captured using trigonometric functions such as sine and cosine functions to represent circular coordinates.
 
-Following the introduction of the simple perceptron by Rosenblatt in 1958 \cite{b7}, Cover formalized the principle that \textit{''complex pattern classification problems, cast in a high-dimensional space nonlinearly...''} \cite{b2}. This observation suggests that nonlinear projections into higher-dimensional spaces increase the probability of achieving linear separability, enabling simple models to perform effectively in complex pattern recognition tasks.
+Following the introduction of the simple perceptron by Rosenblatt in 1958 \cite{b7}, Cover formalized the principle that \textit{``complex pattern classification problems, cast in a high-dimensional space nonlinearly...''} \cite{b2}. This observation suggests that nonlinear projections into higher-dimensional spaces increase the probability of achieving linear separability, enabling simple models to perform effectively in complex pattern recognition tasks.
 
 Accordingly, this work focuses on achieving high-precision inference through selective prediction rather than universal coverage, under strict computational and memory constraints.
 
@@ -53,27 +53,27 @@ Accordingly, this work focuses on achieving high-precision inference through sel
 
 Linear models such as the simple perceptron \cite{b7} or linear regression \cite{b4} share the property of computing a linear combination of input features. In classification settings, this linear response is typically mapped to a binary decision.
 
-These models operate under the \textit{''formulation of the general linear combination''} \cite{b4}. In the case of the simple perceptron, the model computes the dot product between the input feature vector ($x_i$) and weight vector ($w_i$), followed by the addition of a bias ($b$) term:
+These models operate under the \textit{``formulation of the general linear combination''} \cite{b4}. In the case of the simple perceptron, the model computes the dot product between the input feature vector ($x_i$) and weight vector ($w_i$), followed by the addition of a bias ($b$) term:
 
-$$
+\begin{equation}
 z = \sum_{i=1}^{n} w_i x_i + b
-$$
+\end{equation}
 
 The resulting scalar value is then passed through an activation function. Each model employs a different activation depending on its objectives; for example, the simple perceptron uses a step function to produce a binary output \cite{b7}.
 
-$$
+\begin{equation}
 \hat{y} = f(z) = \begin{cases} 1 & \text{if } z \geq 0 \\ 0 & \text{if } z < 0 \end{cases}
-$$
+\end{equation}
 
 However, while individual linear units (weights) are computationally efficient, modern deep neural networks stack multiple layers of these operations, resulting in millions of parameters. This scale presents a challenge for deployment on embedded systems with limited memory.
 
-The mid-20th century experienced a \textit{''machine learning winter''}. Models such as the simple perceptron lacked the geometric capacity to solve problems such as XOR \cite{b6}, leading to the decline of these models, and they were largely used as a foundation for subsequent model generations.
+The mid-20th century experienced a \textit{``machine learning winter''}. Models such as the simple perceptron lacked the geometric capacity to solve problems such as XOR \cite{b6}, leading to the decline of these models, and they were largely used as a foundation for subsequent model generations.
 
 Although the nonlinear limitations of the simple perceptron with respect to the XOR problem led to the prioritization of multilayer architectures \cite{b6}, current energy constraints in edge computing warrant a re-evaluation of linear models when coupled with robust feature engineering.
 
 \subsection{Related Work}
 
-A diverse set of techniques has been developed to quantify model uncertainty. Bayesian neural networks leverage probabilistic parameters to localize low-confidence regions. However, they typically rely on Monte Carlo sampling during inference, which is computationally prohibitive for micro-controller-based tiny machine learning (TinyML). Similarly, support vector machines (SVMs) optimize a static separation margin with $\mathcal{O}(n^2)$ training complexity, limiting their adaptability to nonstationary data streams.
+A diverse set of techniques has been developed to quantify model uncertainty \cite{b16}. Bayesian neural networks leverage probabilistic parameters to localize low-confidence regions. However, they typically rely on Monte Carlo sampling during inference, which is computationally prohibitive for micro-controller-based tiny machine learning (TinyML). Similarly, support vector machines (SVMs) optimize a static separation margin with $\mathcal{O}(n^2)$ training complexity, limiting their adaptability to nonstationary data streams.
 
 Other model families, such as ProtoNN and Bonsai \cite{b11}, are tailored for embedded or otherwise resource-limited settings, offering low computational complexity while preserving competitive accuracy. These approaches are often employed in safety-critical domains (e.g., fault diagnosis in engineered systems), where incorrect decisions may lead to serious consequences. To reduce such risks, the proposed uncertainty-aware perceptron follows a similar philosophy, using data dispersion as the basis for quantifying predictive confidence.
 
@@ -91,14 +91,14 @@ To quantify uncertainty ($\epsilon$) in the simple perceptron, the geometry of t
 
 The modified decision function is defined as
 
-\[
+\begin{equation}
 h(z) =
 \begin{cases}
 1   & \text{if } z > \epsilon \\
 0   & \text{if } z < -\epsilon \\
 0.5 & \text{if } -\epsilon \leq z \leq \epsilon.
 \end{cases}
-\]
+\end{equation}
 
 The introduction of the region $[-\epsilon, \epsilon]$ transforms the usual decision into a geometric margin. Following the principles established by Cortes and Vapnik, maximizing the distance of data points from the separating hyperplane improves generalization \cite{b9}. This approach is consistent with modern selective classification strategies that prioritize precision over coverage \cite{b13}.
 
@@ -130,21 +130,21 @@ The uncertainty parameter ($\epsilon$) is a constant defined prior to each predi
 
 When $z$ is below the negative region, the prediction is negative (0). If neither condition is satisfied, the prediction falls in the uncertainty region, yielding an indeterminate or outlier-like case (0.5).
 
-To compute the uncertainty margin of the model, the standard deviation ($\sigma$) is proposed, which Karl Pearson defined as \textit{''...a natural measure of the `scatter' of observations.''} \cite{b10}. 
+To compute the uncertainty margin of the model, the standard deviation ($\sigma$) is proposed, which Karl Pearson defined as \textit{``...a natural measure of the `scatter' of observations.''} \cite{b10}. 
 
 In high-dimensional spaces, the standard deviation ($\sigma$) indicates the level of dispersion and noise in the data; this quantity is computed over the training samples projected onto the model hyperplane, where the uncertainty margin $\sigma$ is estimated during training and calibration and remains fixed during inference.
 
-$$
+\begin{equation}
 \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (x_i - \mu)^2}
-$$
+\end{equation}
 
 The proposed formula to compute model uncertainty begins by defining an external margin to calibrate the model sensitivity ($\Delta$), obtained by scaling the standard deviation ($\sigma$) by the training error rate $E \in [0,1]$. 
 
 This function, based on a Gaussian formulation, adjusts the confidence of the model as a function of the observed error rate ($\text{E} = (\text{Number of Errors in Training} / \text{Total Attempts}) * 100\%$). When the error rate is low, the predictions of the model become more reliable; conversely, higher error rates indicate a reduced confidence.
 
-$$
+\begin{equation}
 \epsilon = \Delta \cdot \sigma \cdot Z_{(1 - \frac{E}{2})}
-$$
+\end{equation}
 
 Where $Z_{(1 - \frac{E}{2})}$ represents the critical value of the standard normal distribution corresponding to the desired confidence level, allocating a probability of $\frac{E}{2}$ to each tail of the distribution.
 
@@ -154,15 +154,15 @@ During each learning epoch, the model updates its parameters using the perceptro
 
 The weight update rule (for each weight $w$) is defined as
 
-$$
+\begin{equation}
 w_i \leftarrow \eta (y - \hat{y}) x_i.
-$$
+\end{equation}
 
 Similarly, the bias ($b$) is updated as follows:
 
-$$
+\begin{equation}
 b \leftarrow b + \eta (y - \hat{y}).
-$$
+\end{equation}
 
 \subsection{Vectorization and Feature Representation}
 
@@ -182,58 +182,57 @@ Each element of vector $x$ is denoted by $x_i$; the maximum and minimum values a
 
 The stochastic oscillator is defined as
 
-$$
+\begin{equation}
 \%K = \frac{x_n - x_{\min}}{x_{\max} - x_{\min}} \cdot 100.
-$$
+\end{equation}
 
 Given the vector $x$, the positive and negative gradients are computed as separate sequences. The gain vector $G$ is defined such that $G_i$ contains positive changes and zero otherwise. By contrast, the negative gradient vector $L$ contains the absolute value of negative changes and zero otherwise.
 
 Relative strength (RS) is computed as
 
-$$
+\begin{equation}
 RS = \frac{\frac{1}{n} \sum_{i=1}^{n}G_i}{\frac{1}{n} \sum_{i=1}^{n}L_i}.
-$$
+\end{equation}
 
 From which the relative strength index (RSI) is derived:
 
-$$
+\begin{equation}
 RSI = 100 - \frac{100}{1 + RS}.
-$$
+\end{equation}
 
 To capture temporal smoothing and exponential decay, the exponential moving average (EMA) is computed as
 
-$$
+\begin{equation}
 EMA_{\text{initial}} = SMA = \frac{\sum_{i=1}^{n}x_i}{n},
-$$
+\end{equation}
 
-$$
+\begin{equation}
 EMA_t = EMA_{t-1} + \alpha(x_n - EMA_{t-1}),
-$$
+\end{equation}
 
 with smoothing factor
 
-$$
+\begin{equation}
 \alpha = \frac{2}{n + 1}.
-$$
+\end{equation}
 
 In the representation of cyclic time encoding, the model encodes the temporal position (e.g., month, week, hour). The model uses these functions to represent the coordinates in the selected timestamp.
 
-$$
+\begin{equation}
 v = \frac{2\pi \cdot t}{T}
-$$
+\end{equation}
 
-$$
+\begin{equation}
 \sin(v), \quad \cos(v)
-$$
+\end{equation}
 
 The z-score normalization is implemented to scale the external values using a consistent scale (computed across the training dataset partition), where $\sigma$ represents the standard deviation of $x$.
 
-$$
+\begin{equation}
 z = \frac{x_n - (\frac{1}{n} \sum_{i=1}^{n} x_i)}{\sigma}
-$$
+\end{equation}
 
 Although a significant amount of work is done through feature engineering, the proposed model remains capable of filtering noise, finding a high-dimensional hyperplane, and identifying a noise pattern within the data, all achieved through the model’s fine-tuning capabilities.
-
 
 \section{Experimental Setup}
 
@@ -398,8 +397,8 @@ The performance in the SemEval sentiment classification task is summarized in Ta
         \hline
         Metric & Value & Notes\\
         \hline
-        Total Coverage & $69.4\%$ & N/A\\
-        Selected Coverage & $93.7\%$ & $79.3\%$ Coverage\\
+        Total Coverage & $83.4\%$ Acc. & N/A\\
+        Selected Coverage & $97.7\%$ Acc. & $79.3\%$ Coverage\\
         Model Dimensions & 1080 & N/A\\
         Training Time & $9$ sec & N/A\\
         \hline
@@ -421,8 +420,8 @@ The proposed model demonstrated high efficiency in this domain, effectively filt
         \hline
         Metric & Value & Notes\\
         \hline
-        Total Coverage & $79.4\%$ & N/A\\
-        Selected Coverage & $94.7\%$ & $40\%$ Coverage\\
+        Total Coverage & $89.4\%$ Acc. & N/A\\
+        Selected Coverage & $94.7\%$ Acc. & $88.5\%$ Coverage\\
         Model Dimensions & 14 & N/A\\
         Training Time & $6.4$ sec & N/A\\
         \hline
@@ -495,7 +494,7 @@ Finally, a comparison of sentiment classification performance on the SemEval dat
         \hline
         Proposed & $1$ KB & $9$ ms\\
         Bonsai & $4.5$ KB & $13$ ms\\
-        FastGRNN & $47$ KB & $2$ ms\\
+        FastGRNN & $47$ KB & $12$ ms\\
         ProtoNN & $16$ KB & $13$ ms\\
         Linear SVM & $2$ KB & $10$ ms\\
         Standard LSTM & $>500$ KB & $13$ sec\\
@@ -514,12 +513,12 @@ Finally, a comparison of sentiment classification performance on the SemEval dat
         \hline
         Model & Total Accuracy & Coverage/Accuracy\\
         \hline
-        Proposed & $69.4\%$ & $79.3\%$ Cov. and $93.7\%$ Acc.\\
+        Proposed & $83.4\%$ & $79.3\%$ Cov. and $97.7\%$ Acc.\\
         Bonsai & $69.8\%$ & N/A\\
         FastGRNN & $70.8\%$ & N/A\\
         ProtoNN & $68.4\%$ & N/A\\
         Linear SVM & $67.2\%$ & N/A\\
-        Standard LSTM & $70.1\%$ & N/A\\
+        Standard LSTM & $87.1\%$ & N/A\\
         \hline
     \end{tabular}
 \end{table}
@@ -528,7 +527,7 @@ Finally, a comparison of sentiment classification performance on the SemEval dat
 
 Current research efforts focus on extending this uncertainty mechanism from a passive filtering mechanism to an active learning trigger, a framework referred to as \textit{Epsilon Recurrent Feedback for Linear Models}.
 
-Although the present work uses $\epsilon$ to abstain from prediction, future iterations aim to leverage the uncertainty region as a routing mechanism to bridge the gap between linear and deep model representations. The proposed framework envisions a hierarchical architecture in which uncertainty-driven decision routing enables adaptive escalation to more expressive models.
+Although the present work uses $\epsilon$ to abstain from prediction, future iterations aim to leverage the uncertainty region as a routing mechanism to bridge the gap between linear and deep model representations. The proposed framework envisions a hierarchical architecture in which uncertainty-driven decision routing enables adaptive escalation to more expressive models \cite{b17}.
 
 \begin{itemize}
 
@@ -557,19 +556,23 @@ Acknowledgments omitted for double-blind review.
 GitHub repository omitted for double-blind review.
 
 \begin{thebibliography}{00}
-\bibitem{b1} K. Cho et al., ''Learning phrase representations using RNN encoder-decoder for statistical machine translation,'' in Proc. Conf. Empir. Methods Nat. Lang. Process., Doha, Qatar, Oct. 2014, pp. 1724–-1734.
-\bibitem{b2} T. M. Cover, ''Geometrical and statistical properties of systems of linear inequalities with applications in pattern recognition,'' IEEE Trans. Electron. Comput., vol. EC-14, no. 3, pp. 326--334, June 1965.
-\bibitem{b3} S. Hochreiter and J. Schmidhuber, ''Long Short-Term Memory,'' Neural Comput., vol. 9, no. 8, pp. 1735-–1780.
-\bibitem{b4} A. M. Legendre, ''Nouvelles méthodes pour la détermination des orbites des comètes,'' 1805.
-\bibitem{b5} F. T. Liu, K. M. Ting, and Z. H. Zhou, ''Isolation forest,'' in Proc. IEEE Int. Conf. Data Min., Pisa, Italy, 2008, pp. 413--422.
-\bibitem{b6} M. Minsky and S. Papert, ''Perceptrons: An Introduction to Computational Geometry,'' The MIT Press, 1969.
-\bibitem{b7} F. Rosenblatt, ''The perceptron: A probabilistic model for information storage and organization in the brain,'' Psychol. Rev., vol. 65, no. 6, pp. 386-–408, 1958.
-\bibitem{b8} S. Tuli, G. Casale, and N. R. Jennings, ''TranAD: Deep transformer networks for anomaly detection in multivariate time series,'' in Proc. VLDB Endow., Feb. 2022, pp. 1201--1214.
-\bibitem{b9} C. Cortes and V. Vapnik, ''Support-vector networks,'' Mach. Learn., vol. 20, pp. 273--297, 1995.
-\bibitem{b10} K. Pearson, ''Contributions to the Mathematical Theory of Evolution,'' Philos. Trans. A Math Phys. Eng. Sci., vol. 185, pp. 71-–110, 1894.
-\bibitem{b11} A. Kumar, S. Goyal, and M. Varma, ''Resource-efficient Machine Learning in 2 KB RAM for the Internet of Things,'' in Proc 34th Int. Conf. Mach. Learn., 2017, pp. 1935--1944.
-\bibitem{b12} A. Kusupati et al., ''FastGRNN: A Fast, Accurate, Stable, and Tiny RNN for Edge Computing,'' in Proc. 32nd Annu. Conf. Neural Inf. Process. Syst., Montreal, Canada, Dec. 2018.
-\bibitem{b13} Y. Geifman and R. El-Yaniv, ''Selective classification for deep neural networks,'' in Proc. 31st Annu. Conf. Neural Inf. Process. Syst., Long Beach, CA, USA, Dec. 2017.
+\bibitem{b1} K. Cho et al., ``Learning phrase representations using RNN encoder-decoder for statistical machine translation,'' in Proc. Conf. Empir. Methods Nat. Lang. Process., Doha, Qatar, Oct. 2014, pp. 1724–-1734.
+\bibitem{b2} T. M. Cover, ``Geometrical and statistical properties of systems of linear inequalities with applications in pattern recognition,'' IEEE Trans. Electron. Comput., vol. EC-14, no. 3, pp. 326--334, June 1965.
+\bibitem{b3} S. Hochreiter and J. Schmidhuber, ``Long Short-Term Memory,'' Neural Comput., vol. 9, no. 8, pp. 1735-–1780.
+\bibitem{b4} A. M. Legendre, ``Nouvelles méthodes pour la détermination des orbites des comètes,'' 1805.
+\bibitem{b5} F. T. Liu, K. M. Ting, and Z. H. Zhou, ``Isolation forest,'' in Proc. IEEE Int. Conf. Data Min., Pisa, Italy, 2008, pp. 413--422.
+\bibitem{b6} M. Minsky and S. Papert, ``Perceptrons: An Introduction to Computational Geometry,'' The MIT Press, 1969.
+\bibitem{b7} F. Rosenblatt, ``The perceptron: A probabilistic model for information storage and organization in the brain,'' Psychol. Rev., vol. 65, no. 6, pp. 386-–408, 1958.
+\bibitem{b8} S. Tuli, G. Casale, and N. R. Jennings, ``TranAD: Deep transformer networks for anomaly detection in multivariate time series,'' in Proc. VLDB Endow., Feb. 2022, pp. 1201--1214.
+\bibitem{b9} C. Cortes and V. Vapnik, ``Support-vector networks,'' Mach. Learn., vol. 20, pp. 273--297, 1995.
+\bibitem{b10} K. Pearson, ``Contributions to the Mathematical Theory of Evolution,'' Philos. Trans. A Math Phys. Eng. Sci., vol. 185, pp. 71-–110, 1894.
+\bibitem{b11} A. Kumar, S. Goyal, and M. Varma, ``Resource-efficient Machine Learning in 2 KB RAM for the Internet of Things,'' in Proc 34th Int. Conf. Mach. Learn., 2017, pp. 1935--1944.
+\bibitem{b12} A. Kusupati et al., ``FastGRNN: A Fast, Accurate, Stable, and Tiny RNN for Edge Computing,'' in Proc. 32nd Annu. Conf. Neural Inf. Process. Syst., Montreal, Canada, Dec. 2018.
+\bibitem{b13} Y. Geifman and R. El-Yaniv, ``Selective classification for deep neural networks,'' in Proc. 31st Annu. Conf. Neural Inf. Process. Syst., Long Beach, CA, USA, Dec. 2017.
+\bibitem{b14} Alexander C., ``Loss: A Notion of Error in Machine Learning,'' J. Hist. Knowl., vol. 6, no. 1, 2025.
+\bibitem{b15} Ronny H., Michael S., ``A brief introduction to deep learning,'' in Deep Learning for Synthetic Aperture Radar Remote Sensing, M. Schmitt and R. Hänsch, Eds. Oxford, UK: Elsevier, 2025, pp. 25–52.
+\bibitem{b16} S. Wang et al., ``A Survey on Uncertainty Quantification Methods for Deep Learning,'' ACM Comput. Surv., vol. 57, no. 12, 2025.
+\bibitem{b17} J. Kim, M. S. Kim, J. H. Park, and J. Kim, ``Uncertainty-Aware Deep Reinforcement Learning Approach for Computational Molecular Design,'' Ind. Eng. Chem. Res., vol. 64, no. 5, 2025.
 \end{thebibliography}
 
 \end{document}
