@@ -9,93 +9,104 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{float}
+\usepackage{url}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
 \begin{document}
 
-\title{Revisiting Rosenblatt Perceptron: Robust High-Entropy Classification via Uncertainty Margins}
+\title{Revisiting Rosenblatt’s Perceptron: Robust High-Entropy Classification via Uncertainty Margins}
 
 \author{\IEEEauthorblockN{Anonymous Author(s) Affiliation omitted for double-blind review}}
 
 \maketitle
 
 \begin{abstract}
-This paper addresses the challenge of deploying uncertainty-aware models in resource-constrained TinyML environments. While state-of-the-art architectures, such as LSTMs and Transformers, provide high representational capacity, their inference overhead and memory requirements are often prohibitive for edge applications. The present work develops a computationally efficient alternative: a modified linear perceptron featuring an adaptive selective prediction mechanism. 
+This paper addresses the challenge of deploying uncertainty-aware models in resource-constrained tiny machine learning environments. While state-of-the-art architectures, such as long short-term memory networks and transformers, provide high representational capacity, their inference overhead and memory requirements are often prohibitive for edge applications. This work develops a computationally efficient alternative: a modified linear perceptron featuring an adaptive selective prediction mechanism. 
 
-By defining a geometric abstention region $[-\epsilon, \epsilon]$ around the decision hyperplane, the model implements a confidence-aware mechanism and selectively rejects low-confidence samples. Unlike static margin classifiers, the proposed $\epsilon$ parameter is derived from statistical properties estimated during training and calibration, while remaining fixed during inference, preserving a constant-time complexity of $\mathcal{O}(d)$.
+By defining a geometric abstention region $[-\epsilon, \epsilon]$ around the decision hyperplane, the model introduces a confidence-aware mechanism and selectively rejects low-confidence samples. Unlike static margin classifiers, the proposed $\epsilon$ parameter is derived from statistical properties estimated during training and calibration, and it remains fixed during inference, preserving constant-time complexity $\mathcal{O}(d)$.
 
-The framework was evaluated across various high-entropy scenarios, including non-stationary financial time series, sentiment analysis (SemEval), and industrial fault detection (NASA IMS Bearing dataset). Experimental results demonstrate that the model achieves an inference memory footprint of $\approx 1$ KB and orders-of-magnitude lower computational overhead compared to recurrent neural networks. 
+The framework was evaluated across several high-entropy scenarios, including nonstationary financial time series, sentiment analysis using the Semantic Evaluation dataset, and industrial fault detection based on the National Aeronautics and Space Administration Industrial Machine Surveillance bearing dataset. Experimental results demonstrated that the model achieved an inference memory footprint of $\approx 1$ KB and orders of magnitude lower computational overhead than recurrent neural networks. 
 
-Furthermore, the selective mechanism enables the model to reach precision levels exceeding 90\% at reduced coverage of high-confidence predictions in industrial tasks. These findings suggest that robust feature engineering coupled with selective linear modeling provides a viable and energy-efficient path for reliable inference in hardware-limited settings.
+The selective mechanism enables the model to reach precision levels exceeding 90\% at reduced coverage of high-confidence predictions in industrial tasks. These findings suggest that robust feature engineering coupled with selective linear modeling provides an energy-efficient and reliable approach for inference in hardware-limited settings.
 \end{abstract}
 
 \begin{IEEEkeywords}
-Tiny Machine Learning, Simple Perceptron, Uncertainty Quantification, Selective Prediction, Feature Engineering, Time Series Forecasting, Non-stationary Data.
+tiny machine learning, simple perceptron, uncertainty quantification, selective prediction, feature engineering, time series forecasting, nonstationary data.
 \end{IEEEkeywords}
 
 \section{Introduction}
 
-Modern machine learning models composed of multiple algebraic transformations (i.e. hidden layers) typically exhibit time complexity greater than $\mathcal{O}(n)$ per prediction, resulting in high computational costs during training, inference, and fine-tuning, particularly in edge embedded applications.
+Modern machine learning models comprise multiple algebraic transformations (i.e., hidden layers) and exhibit a time complexity greater than $\mathcal{O}(d)$ per prediction, resulting in high computational costs during training, inference, and fine-tuning, particularly in embedded edge applications.
 
-Such models identify patterns in raw data by applying geometrical transformations, processing the input layer by layer to extract increasingly abstract representations.
+Such models identify patterns in raw data by applying geometric transformations \cite{b2}, processing the input layer by layer to extract increasingly abstract representations.
 
-In contrast, feature learning can be replaced by feature engineering, where mathematical formulations are employed to encode relevant structures directly, rather than relying on hidden layers for representation learning. For instance, periodic structures can be efficiently captured using trigonometric functions such as sine and cosine functions to represent circular coordinates.
+By contrast, feature learning can be replaced by feature engineering, where mathematical formulations are employed to encode relevant structures directly, rather than relying on hidden layers for representation learning. For example, periodic structures can be efficiently captured using trigonometric functions such as sine and cosine functions to represent circular coordinates.
 
-Following the introduction of the simple perceptron by Rosenblatt in 1957 \cite{b7}, Cover formalized the principle that \textit{“complex pattern classification problems, cast in a high-dimensional space nonlinearly...”} \cite{b2}. This observation suggests that nonlinear projections into higher-dimensional spaces increase the probability of achieving linear separability, enabling simple models to perform effectively in complex pattern recognition tasks.
+Following the introduction of the simple perceptron by Rosenblatt in 1958 \cite{b7}, Cover formalized the principle that \textit{''complex pattern classification problems, cast in a high-dimensional space nonlinearly...''} \cite{b2}. This observation suggests that nonlinear projections into higher-dimensional spaces increase the probability of achieving linear separability, enabling simple models to perform effectively in complex pattern recognition tasks.
 
-\section{Background}
+Accordingly, this work focuses on achieving high-precision inference through selective prediction rather than universal coverage, under strict computational and memory constraints.
 
-Linear models such as the simple perceptron \cite{b7} or linear regression \cite{b4} share the property of computing a linear combination of input features. In classification settings, this linear response is typically mapped to a binary window decision.
+\section{Background and Related Work}
 
-These models operate under the \textit{“formulation of the "general linear combination”} \cite{b4}. In the case of the simple perceptron, the model computes the dot product between the input feature vector and the corresponding vector, followed by the addition of bias term:
+\subsection{Background}
+
+Linear models such as the simple perceptron \cite{b7} or linear regression \cite{b4} share the property of computing a linear combination of input features. In classification settings, this linear response is typically mapped to a binary decision.
+
+These models operate under the \textit{''formulation of the general linear combination''} \cite{b4}. In the case of the simple perceptron, the model computes the dot product between the input feature vector ($x_i$) and weight vector ($w_i$), followed by the addition of a bias ($b$) term:
 
 $$
 z = \sum_{i=1}^{n} w_i x_i + b
 $$
 
-The resulting scalar value is then passed through an activation function. Each model employs a different activation depending on its objectives; for example, the simple perceptron uses a step function to produce binary output \cite{b7}.
+The resulting scalar value is then passed through an activation function. Each model employs a different activation depending on its objectives; for example, the simple perceptron uses a step function to produce a binary output \cite{b7}.
 
 $$
 \hat{y} = f(z) = \begin{cases} 1 & \text{if } z \geq 0 \\ 0 & \text{if } z < 0 \end{cases}
 $$
 
-However, while individual linear units (weights) are computationally efficient, modern Deep Neural Networks stack multiple layers of these operations, resulting in millions of parameters. This scale presents a challenge for deployment on embedded systems with limited memory.
+However, while individual linear units (weights) are computationally efficient, modern deep neural networks stack multiple layers of these operations, resulting in millions of parameters. This scale presents a challenge for deployment on embedded systems with limited memory.
 
-In the mid-20th century, something similar to a \textit{“machine learning winter”} occurred. Models such as the simple perceptron lacked the geometric capacity to solve problems such as XOR \cite{b6}, leading to the dropout of these models and their use was only retained as a foundation for subsequent generations of models.
+The mid-20th century experienced a \textit{''machine learning winter''}. Models such as the simple perceptron lacked the geometric capacity to solve problems such as XOR \cite{b6}, leading to the decline of these models, and they were largely used as a foundation for subsequent model generations.
 
-Although the non-linear limitations of the simple perceptron with respect to the XOR problem led to the prioritization of multi-layer architectures \cite{b6}, current energy constraints in edge computing warrant a re-evaluation of linear models when coupled with robust feature engineering.
+Although the nonlinear limitations of the simple perceptron with respect to the XOR problem led to the prioritization of multilayer architectures \cite{b6}, current energy constraints in edge computing warrant a re-evaluation of linear models when coupled with robust feature engineering.
 
-\section{Related Work}
+\subsection{Related Work}
 
-"A diverse set of techniques has been developed to quantify model uncertainty. Bayesian Neural Networks (BNNs) leverage probabilistic parameters to localize low-confidence regions. However, BNNs typically rely on Monte Carlo sampling during inference, which is computationally prohibitive for micro-controller-based TinyML. Similarly, Support Vector Machines (SVMs) optimize a static separation margin with $\mathcal{O}(n^2)$ training complexity, limiting their adaptability to non-stationary data streams.
+A diverse set of techniques has been developed to quantify model uncertainty. Bayesian neural networks leverage probabilistic parameters to localize low-confidence regions. However, they typically rely on Monte Carlo sampling during inference, which is computationally prohibitive for micro-controller-based tiny machine learning (TinyML). Similarly, support vector machines (SVMs) optimize a static separation margin with $\mathcal{O}(n^2)$ training complexity, limiting their adaptability to nonstationary data streams.
 
 Other model families, such as ProtoNN and Bonsai \cite{b11}, are tailored for embedded or otherwise resource-limited settings, offering low computational complexity while preserving competitive accuracy. These approaches are often employed in safety-critical domains (e.g., fault diagnosis in engineered systems), where incorrect decisions may lead to serious consequences. To reduce such risks, the proposed uncertainty-aware perceptron follows a similar philosophy, using data dispersion as the basis for quantifying predictive confidence.
 
 Unlike SVMs, which determine a fixed separating margin through a computationally demanding training process with complexity on the order of $\mathcal{O}(n^2)$, the geometric margin $\epsilon$ in the proposed approach is computed from statistical descriptors (e.g., the empirical standard deviation $\sigma$) learned during training and calibration. This design maintains an inference complexity of $\mathcal{O}(d)$, where $d$ is the dimensionality of the input.
 
-Current machine learning research often prioritizes representation learning architectures (e.g., LSTMs or Transformers). However, for non-stationary time-series, the computational burden of learning temporal dependencies can in many cases be replaced by trigonometric cyclic encoding and stochastic oscillators \cite{b12}. Shifting from “learning the structure” to explicitly “encoding the structure” allows linear models to remain competitive in high-entropy settings, especially when selective prediction and reliability-oriented performance metrics are used.
+Current machine learning research often prioritizes representation learning architectures (e.g., long short-term memory networks or transformers). However, for nonstationary time series, the computational burden of learning temporal dependencies can in many cases be replaced by trigonometric cyclic encoding and stochastic oscillators \cite{b12}. Shifting from learning the structure to explicitly encoding the structure allows linear models to remain competitive in high-entropy settings, especially when selective prediction and reliability-oriented performance metrics are used.
 
-\section{Linear Decision Hyperplane with Marginal Uncertainty}
+\section{Methods}
+
+This section presents the proposed uncertainty-aware linear perceptron, detailing its decision rule, learning procedure, and feature representation.
+
+\subsection{Uncertainty-Aware Linear Decision Rule}
 
 To quantify uncertainty ($\epsilon$) in the simple perceptron, the geometry of the step function defines the region in which the weighted sum lies for positive (1) and negative (0) predictions.
 
-The modified decision function is defined as:
+The modified decision function is defined as
 
 \[
 h(z) =
 \begin{cases}
 1   & \text{if } z > \epsilon \\
 0   & \text{if } z < -\epsilon \\
-0.5 & \text{if } -\epsilon \leq z \leq \epsilon
+0.5 & \text{if } -\epsilon \leq z \leq \epsilon.
 \end{cases}
 \]
 
 The introduction of the region $[-\epsilon, \epsilon]$ transforms the usual decision into a geometric margin. Following the principles established by Cortes and Vapnik, maximizing the distance of data points from the separating hyperplane improves generalization \cite{b9}. This approach is consistent with modern selective classification strategies that prioritize precision over coverage \cite{b13}.
 
+Fig. 1 illustrates the modified step function with the uncertainty margin $\epsilon$, highlighting the abstention region around the decision boundary.
+
 \begin{figure}[H]
     \centering
-    \caption{Uncertainty Step Function}
+    \caption{Uncertainty-Step-Function}
     \label{tab:Uncertainty-Step-Function}
     \begin{tikzpicture}[x=1.5cm, y=1.8cm, thick, >=stealth]
         \draw[->] (-2,0) -- (2,0) node[right] {$z$};
@@ -113,97 +124,99 @@ The introduction of the region $[-\epsilon, \epsilon]$ transforms the usual deci
     \end{tikzpicture}
 \end{figure}
 
-Unlike static margins in SVMs, the proposed $\epsilon$ introduces an uncertainty-aware margin, forcing the perceptron to continue updating its weights when samples fall within the uncertainty region ($h(x) = 0.5$), indicating insufficient geometric distance from the decision boundary.
+Unlike static margins in SVMs, the proposed $\epsilon$ introduces an uncertainty-aware margin, forcing the perceptron to continue updating its weights when samples fall within the uncertainty region ($h(z) = 0.5$), indicating insufficient geometric distance from the decision boundary.
 
-The uncertainty parameter ($\epsilon$) is a constant defined prior to each prediction, introducing a gray region around the "decision border". The model outputs a positive prediction (1) when the linear activation ($z$) exceeds the uncertainty threshold ($\epsilon$). 
+The uncertainty parameter ($\epsilon$) is a constant defined prior to each prediction, introducing a gray region around the decision boundary. The model outputs a positive prediction (1) when the linear activation ($z$) exceeds the uncertainty threshold ($\epsilon$). 
 
-When $z$ is below the negative region, the prediction is negative (0). If neither condition is satisfied, the prediction falls in the uncertainty region, yielding an indeterminate or outlier case (0.5).
+When $z$ is below the negative region, the prediction is negative (0). If neither condition is satisfied, the prediction falls in the uncertainty region, yielding an indeterminate or outlier-like case (0.5).
 
-To compute the uncertainty margin of the model, the standard deviation ($\sigma$) is proposed, which Karl Pearson defined as \textit{"...a natural measure of the "scatter" of observations."} \cite{b10}. 
+To compute the uncertainty margin of the model, the standard deviation ($\sigma$) is proposed, which Karl Pearson defined as \textit{''...a natural measure of the `scatter' of observations.''} \cite{b10}. 
 
-In high-dimensional spaces, the standard deviation ($\sigma$) indicates the level of dispersion and noise in the data; this standard deviation must be calculated for each of the training data in the hyperplane of the model, where the uncertainty margin $\sigma$ is estimated during training and calibration and remains fixed during inference.
+In high-dimensional spaces, the standard deviation ($\sigma$) indicates the level of dispersion and noise in the data; this quantity is computed over the training samples projected onto the model hyperplane, where the uncertainty margin $\sigma$ is estimated during training and calibration and remains fixed during inference.
 
 $$
 \sigma = \sqrt{\frac{1}{N} \sum_{i=1}^{N} (x_i - \mu)^2}
 $$
 
-The proposed formula to compute model uncertainty begins by defining an external margin to calibrate the model sensitivity ($\Delta$), obtained by multiplying the ratio of the standard deviation ($\sigma$) to the error rate—scaled between 0 and 1 ($\text{E}$). 
+The proposed formula to compute model uncertainty begins by defining an external margin to calibrate the model sensitivity ($\Delta$), obtained by scaling the standard deviation ($\sigma$) by the training error rate $E \in [0,1]$. 
 
-This function, based on a Gaussian formulation, adjusts the confidence of the model as a function of the observed error rate ($\text{E} = (\text{Number of Errors in Training} / \text{Total Attempts}) \cdot 100\%$) when the error rate is low, the predictions of the model become more reliable; conversely, higher error rates indicate a reduced confidence.
+This function, based on a Gaussian formulation, adjusts the confidence of the model as a function of the observed error rate ($\text{E} = (\text{Number of Errors in Training} / \text{Total Attempts}) * 100\%$). When the error rate is low, the predictions of the model become more reliable; conversely, higher error rates indicate a reduced confidence.
 
 $$
 \epsilon = \Delta \cdot \sigma \cdot Z_{(1 - \frac{E}{2})}
 $$
 
-\section{Model Learning Rule}
+Where $Z_{(1 - \frac{E}{2})}$ represents the critical value of the standard normal distribution corresponding to the desired confidence level, allocating a probability of $\frac{E}{2}$ to each tail of the distribution.
 
-During each learning epoch, the model updates its parameters using the Perceptron learning rule \cite{b7}. The weight adjustment is calculated as the product of the learning rate ($\eta$) and the prediction error, defined as the difference between the true label ($y$) and the predicted output of the perceptron ($\hat{y}$), which is obtained from the activation step function (0 or 1).
+\subsection{Learning Rule}
 
-The weight update rule ($w$) is defined as:
+During each learning epoch, the model updates its parameters using the perceptron learning rule \cite{b7}. The weight adjustment is calculated as the product of the learning rate ($\eta$) and the prediction error, defined as the difference between the true label ($y$) and the predicted output of the perceptron ($\hat{y}$), which is obtained from the activation step function.
+
+The weight update rule (for each weight $w$) is defined as
 
 $$
-w_i \leftarrow \eta (y - \hat{y}) x_i
+w_i \leftarrow \eta (y - \hat{y}) x_i.
 $$
 
 Similarly, the bias ($b$) is updated as follows:
 
 $$
-b \leftarrow b + \eta (y - \hat{y})
+b \leftarrow b + \eta (y - \hat{y}).
 $$
 
-\section{Model Vectorization and Feature Representation}
+\subsection{Vectorization and Feature Representation}
 
-In order to construct an algebraic representation for linear modeling, the raw time-series data are transformed into a structured  input vector using a set of operations.
+To construct an algebraic representation for linear modeling, the raw time series data are transformed into a structured input vector using a set of operations.
 
-The objective of this vectorization process is to represent diverse temporal, statistical, and dynamical properties of the signal in a high-dimensional space, increasing the probability of achieving linear separability.
+The objective of this vectorization process is to represent diverse temporal, statistical, and dynamical properties of the signal in a high-dimensional space, thereby increasing the probability of achieving linear separability.
 
-The resulting input vector ($v$) is composed of three characteristic groups: indicators that capture the structure of the time-series, cyclic time encoding to preserve the periodic structure, and normalized statistical attributes to ensure the appropriate data scale.
+The resulting input vector ($v$) is composed of three characteristic groups: indicators that capture the structure of the time series, cyclic time encoding to preserve the periodicity, and normalized statistical attributes to ensure the appropriate data scaling.
 
-\subsection{Non-Stationary Indicator Features}
+\subsubsection{Nonstationary Indicator Features}
 
-Here, the raw data vector is $x$. A set of indicators are used as statistical metrics to represent the time-performance and health of the data.
+Here, the raw data vector is $x$. A set of indicators is used as statistical metrics to represent the temporal behavior and condition of the data.
 
-The results presented in this work are obtained using a specific set of indicators, which introduces non-linear transformations of the original raw values, expanding the representational capacity of the linear model.
+The results presented in this work are obtained using a specific set of indicators, which introduce nonlinear transformations of the original raw values, expanding the representational capacity of the linear model.
 
-For the vector $x$, each element is denoted by $x_i$; the maximum and minimum values are given by $x_{\max}$ and $x_{\min}$, and the last element is denoted by $x_n$.
+Each element of vector $x$ is denoted by $x_i$; the maximum and minimum values are given by $x_{\max}$ and $x_{\min}$, and the last element is denoted by $x_n$.
 
-The stochastic oscillator is defined as:
-
-$$
-\%K = \frac{x_n - x_{\min}}{x_{\max} - x_{\min}} \cdot 100
-$$
-
-Given the vector $x$, the positive and negative gradients are computed as a separate list. The gain vector $G$ is defined such that $G_i$ contains positive changes and zero otherwise. In contrast, the negative gradient vector $L$ contains the absolute value of negative changes and zero otherwise.
-
-Relative strength (RS) is computed as:
+The stochastic oscillator is defined as
 
 $$
-RS = \frac{\frac{1}{n} \sum_{i=1}^{n}G_i}{\frac{1}{n} \sum_{i=1}^{n}L_i}
+\%K = \frac{x_n - x_{\min}}{x_{\max} - x_{\min}} \cdot 100.
 $$
 
-From which the Relative Strength Index (RSI) is derived:
+Given the vector $x$, the positive and negative gradients are computed as separate sequences. The gain vector $G$ is defined such that $G_i$ contains positive changes and zero otherwise. By contrast, the negative gradient vector $L$ contains the absolute value of negative changes and zero otherwise.
+
+Relative strength (RS) is computed as
 
 $$
-RSI = 100 - \frac{100}{1 + RS}
+RS = \frac{\frac{1}{n} \sum_{i=1}^{n}G_i}{\frac{1}{n} \sum_{i=1}^{n}L_i}.
 $$
 
-To capture temporal smoothing and exponential decay, the Exponential Moving Average (EMA) is computed as:
+From which the relative strength index (RSI) is derived:
 
 $$
-EMA_{\text{initial}} = SMA = \frac{\sum_{i=1}^{n}x_i}{n}
+RSI = 100 - \frac{100}{1 + RS}.
+$$
+
+To capture temporal smoothing and exponential decay, the exponential moving average (EMA) is computed as
+
+$$
+EMA_{\text{initial}} = SMA = \frac{\sum_{i=1}^{n}x_i}{n},
 $$
 
 $$
-EMA_t = EMA_{t-1} + \alpha(x_n - EMA_{t-1})
+EMA_t = EMA_{t-1} + \alpha(x_n - EMA_{t-1}),
 $$
 
-with smoothing factor:
+with smoothing factor
 
 $$
-\alpha = \frac{2}{n + 1}
+\alpha = \frac{2}{n + 1}.
 $$
 
-In the representation of cyclic time encoding, these models learn to develop a sense of time (e.g., month, week, hour, etc.). The model uses these functions to represent the "coordinates" in the selected timestamp.
+In the representation of cyclic time encoding, the model encodes the temporal position (e.g., month, week, hour). The model uses these functions to represent the coordinates in the selected timestamp.
 
 $$
 v = \frac{2\pi \cdot t}{T}
@@ -213,35 +226,68 @@ $$
 \sin(v), \quad \cos(v)
 $$
 
-The Z-score normalization is implemented to scale the external values using a consistent scale (computed across the training data set partition), where $\sigma$ represents the standard deviation of $x$.
+The z-score normalization is implemented to scale the external values using a consistent scale (computed across the training dataset partition), where $\sigma$ represents the standard deviation of $x$.
 
 $$
 z = \frac{x_n - (\frac{1}{n} \sum_{i=1}^{n} x_i)}{\sigma}
 $$
 
-Although a significant amount of work is done through feature engineering, the proposed model remains the one that is capable of filtering noise, finding a high-dimensional hyperplane, and identifying a “noise” pattern within the data. All of which are achieved through the model’s fine-tuning capabilities.
+Although a significant amount of work is done through feature engineering, the proposed model remains capable of filtering noise, finding a high-dimensional hyperplane, and identifying a noise pattern within the data, all achieved through the model’s fine-tuning capabilities.
 
-\section{Non-stationary Dataset and Data Preprocessing}
 
-\subsection{Non-stationary Selected Dataset}
+\section{Experimental Setup}
 
-During training, various high-noise and non-stationary datasets were used for model testing. To validate the model in environments where large amounts of data are easily available, several historical corporate data were selected.
+The following section describes the datasets, evaluation protocol, and hardware configuration used to assess the proposed method.
 
-These datasets were chosen because historical corporate environments allow the model to be subjected to extreme noise stress over long periods (up to the last 10 years).
+\subsection{Datasets}
 
-\subsection{Dataset Management}
+\subsubsection{Nonstationary Financial Time-Series Dataset}
 
-To ensure proper data collection and avoid data leakage, the entire data set was divided into separate subsets for training and post-training testing.
+During training, various high-noise-level and nonstationary datasets were used for model testing. To validate the model in environments where large amounts of data are easily available, several historical corporate datasets were selected.
 
-A sliding-window algorithm (using a window length of 14) was implemented to iterate over the current and past data window. The model was explicitly prevented from accessing future data.
+These datasets were chosen because corporate time-series environments allow the model to be subjected to sustained noise stress over long periods (up to ten years).
 
-\subsection{Approach}
+\subsubsection{Sentiment Analysis Dataset and Data Preprocessing}
 
-With the split data set, the model was trained as usual, following the Rosenblatt approach \cite{b7}. After completion of the full training phase, uncertainty was added during post-training testing, and the model was run across the entire dataset using the same sliding-window approach.
+To demonstrate that this model is not limited to long nonstationary data, it was also challenged using a dataset for sentiment analysis, classified as positive (1) or negative (0). The dataset selected for this task was SemEval; \url{https://semeval.github.io/}, which provides sentiment labels for social media text, demonstrating the applicability of the proposed model when applied to natural language processing tasks.
 
-\subsection{Non-stationary Data Results}
+For data preparation, n-grams were used and a corresponding scale was created to normalize the token values between 0 and 1. Finally, for data analysis, techniques similar to those used in convolutional neural networks were applied, where the model operates in a manner similar to a sliding window over the sequence, performing inference depending on the size of the respective input vector.
 
-Hereafter, the section presents all the results obtained from experiments conducted across various distinct high-noise environments, together with the computational resources employed and the corresponding approximate execution times, including: data post-processing, training, and inference.
+\subsubsection{Industrial Validation: NASA IMS Bearing Dataset}
+
+To further validate the model in a critical embedded sensing scenario, the NASA IMS Bearing Dataset was used. This task involves  binary classification of bearing condition (healthy (1) vs. faulty (0)) based on vibration accelerometer data; \url{https://data.nasa.gov/dataset/ims-bearings}.
+
+Unlike the stochastic nature of markets, mechanical degradation follows physical laws; however, early fault detection remains challenging owing to signal noise during transitional degradation states. For this task, a low-dimensional input vector is engineered, consisting of root mean square (RMS), harmonic oscillators, sin, cos, kurtosis, crest factor, and skewness, computed over sliding windows.
+
+\subsection{Data Management and Evaluation Protocol}
+
+\subsubsection{Dataset Splitting}
+
+To ensure proper data collection and avoid data leakage, the entire dataset was divided into separate subsets for training ($\%73$) and post-training evaluation ($\%27$).
+
+A sliding window algorithm (using a window length of 14 samples) was implemented to iterate over the current and past observation window. The model was constrained to prevent access to future data.
+
+\subsubsection{Sliding-Window Evaluation}
+
+With the split dataset, the model was trained using the standard perceptron learning procedure, following the Rosenblatt approach \cite{b7}. After completion of the full training phase, the uncertainty mechanism was applied during post-training evaluation, and the model was run across the entire dataset using the same sliding window approach.
+
+\subsection{Hardware Configuration}
+
+The hardware used during training consisted of a single 64-bit CPU core and approximately 1 MB of RAM. During the inference phase, the model used only approximately 1 kB of memory because it did not need to load the dataset into memory.
+
+Similarly, the model was tested on a t2.micro instance within the Amazon Web Services (AWS) architecture. Running on this hardware, the same resource usage characteristics were observed.
+
+\section{Results}
+
+\subsection{Nonstationary Time Series Results}
+
+The section presents the results obtained from experiments conducted across multiple high-noise environments, together with the computational resources employed and the corresponding approximate execution times, including data post-processing, training, and inference. 
+
+The statistical properties of the nonstationary datasets used in this study are summarized in Table~\ref{tab:Timestamp-Window-Sequential-Set}. 
+
+Table~\ref{tab:Training-Time-Sequential-Set} reports the total training time and number of training vectors for each dataset. Baseline training accuracy without selective prediction is reported in Table~\ref{tab:Total-Accuracy-Sequential-Set}. 
+
+Finally, Table~\ref{tab:Uncertainty-Accuracy-Medium} presents the coverage--accuracy trade-off obtained after introducing the uncertainty mechanism.
 
 \begin{table}[H]
     \centering
@@ -249,7 +295,7 @@ Hereafter, the section presents all the results obtained from experiments conduc
     \label{tab:Timestamp-Window-Sequential-Set}
     \begin{tabular}{c c c}
         \hline
-        Dataset ID & Volatility Profile ($\sigma$) & Duration (yrs)\\
+        Dataset ID & Volatility Profile ($\sigma$) & Duration (years)\\
         \hline
         Type I & $0.58$ & $2.75$\\
         Type II & $0.31$ & $9.5$\\
@@ -257,7 +303,7 @@ Hereafter, the section presents all the results obtained from experiments conduc
         Type IV & $0.26$ & $2.9$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        Sampled at 15-minute time steps. $\sigma$ represents the annualized standard deviation of the dataset, for the noisy density. Type I: TSLA, Type II: GOOGL, Type III: Eli Lilly, Type IV: APPL.
+        Sampled at 15 min time steps. $\sigma$ represents the annualized standard deviation of the datasets, characterizing signal volatility. Type I: Tesla (TSLA), Type II: Alphabet (GOOGL), Type III: Eli Lilly and Company, Type IV: Apple Inc. (AAPL).
         }
     \end{tabular}
 \end{table}
@@ -276,7 +322,7 @@ Hereafter, the section presents all the results obtained from experiments conduc
         Type IV & $3.74$ sec & $37000$\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        Obtained results include processing and prepossessing time, during the training.
+        The obtained results include data processing and preprocessing time incurred during training.
         }
     \end{tabular}
 \end{table}
@@ -295,10 +341,12 @@ Hereafter, the section presents all the results obtained from experiments conduc
         Type IV & $56.84$\\
         \hline
         \multicolumn{2}{p{0.9\linewidth}}{\centering
-        Dataset was split into $73\%$ for training, corresponding to $27\%$ for testing.
+        The dataset was split into $\%73$ for training and $\%27$ for testing.
         }
     \end{tabular}
 \end{table}
+
+These tables present the coverage–accuracy trade-off obtained on the evaluation partition after incorporating the uncertainty mechanism under different sensitivity settings.
 
 \begin{table}[H]
     \centering
@@ -338,13 +386,9 @@ Hereafter, the section presents all the results obtained from experiments conduc
     \end{tabular}
 \end{table}
 
-\section{Sentiment Analysis Dataset and Data Preprocessing}
+\subsection{Sentiment Analysis Results}
 
-To demonstrate that this model not only works with long non-stationary data, it was also challenged against a dataset for sentiment analysis, classified as positive (1) or negative (0). The data set selected for this task was SemEval, a data set that labels data from a social network as positive or negative, thereby demonstrating the convergence of this model when applied to natural language processing tasks.
-
-For data preparation, N-grams were used and a corresponding scale was created to normalize the characters between 0 and 1. Finally, for data analysis, techniques similar to those used in convolutional neural networks were applied, where the model operates in a manner similar to a sliding window over the sequence, performing inference depending on the size of the respective input vector.
-
-\subsection{Sentiment Data Results}
+The performance in the SemEval sentiment classification task is summarized in Table~\ref{tab:NLP-SemEval}.
 
 \begin{table}[H]
     \centering
@@ -352,7 +396,7 @@ For data preparation, N-grams were used and a corresponding scale was created to
     \label{tab:NLP-SemEval}
     \begin{tabular}{c c c}
         \hline
-        Metric & Value & Other\\
+        Metric & Value & Notes\\
         \hline
         Total Coverage & $69.4\%$ & N/A\\
         Selected Coverage & $93.7\%$ & $79.3\%$ Coverage\\
@@ -360,20 +404,14 @@ For data preparation, N-grams were used and a corresponding scale was created to
         Training Time & $9$ sec & N/A\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        The section presents the total coverage, selected, model dimensions (in this case, the dimensionality corresponds to the number of n-grams or bag-of-words features) and training time.
+        This table reports total and selected coverage, model dimensionality (corresponding to the number of n-grams or bag-of-words features), and training time.
         }
     \end{tabular}
 \end{table}
 
-\section{Industrial Validation: NASA Bearing Dataset}
-
-To further validate the model in a critical embedded sensing scenario, the NASA IMS Bearing Dataset has been utilized. This task involves a binary classification of the bearing state (Healthy:1 vs. Faulty:0) based on vibration accelerometer data.
-
-Unlike the stochastic nature of markets, mechanical degradation follows physical laws, yet early fault detection remains challenging due to signal noise in transition states. For this task, a low-dimensional input vector has been engineered, consisting of Root Mean Square (RMS), harmonic oscillators, sin, cos, Kurtosis, Crest Factor, and Skewness, computed over sliding windows.
-
 \subsection{Industrial Data Results}
 
-The proposed model demonstrated exceptional efficiency in this domain, effectively filtering out transition noise to provide reliable early warnings.
+The proposed model demonstrated high efficiency in this domain, effectively filtering transitional noise to provide a reliable early warning capability. Table~\ref{tab:NASA-Results} reports accuracy and coverage results on the NASA IMS Bearing Dataset.
 
 \begin{table}[H]
     \centering
@@ -381,7 +419,7 @@ The proposed model demonstrated exceptional efficiency in this domain, effective
     \label{tab:NASA-Results}
     \begin{tabular}{c c c}
         \hline
-        Metric & Value & Other\\
+        Metric & Value & Notes\\
         \hline
         Total Coverage & $79.4\%$ & N/A\\
         Selected Coverage & $94.7\%$ & $40\%$ Coverage\\
@@ -389,20 +427,18 @@ The proposed model demonstrated exceptional efficiency in this domain, effective
         Training Time & $6.4$ sec & N/A\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        By rejecting uncertain samples during the transient degradation phase, the model achieves near-perfect accuracy in confirmed states, acting as a robust low-power early warning system.$\mathbf{79.3\%\text{ Cov.} \ \& \ 93.7\%\text{ Acc.}}$
+        By rejecting uncertain samples during transient degradation phases, the model achieved high accuracy in confirmed states, supporting robust low-power early warning operation.
         }
     \end{tabular}
 \end{table}
 
-\section{Used Hardware}
+\section{Analysis and Comparison}
 
-The hardware used during training consisted of a single 64-bit CPU core and $\approx 1$ MB of RAM. During the inference phase, the model used only $\approx 1$ KB of memory, since it did not need to load the data set into memory.
+This section analyzes the computational implications of the obtained results and situates the proposed approach relative to existing TinyML models.
 
-Similarly, the model was tested on a t2.micro server within the AWS architecture. Running on this hardware, the same resource usage metrics were observed.
+\subsection{Computational Complexity Analysis}
 
-\section{Mathematical Analysis}
-
-The primary distinction of the proposed model lies in its reduced time complexity and minimal memory footprint. Before formal analysis, this section elucidates the underlying mathematical foundations and the specific calculations for each component of the model.
+The primary distinction of the proposed model lies in its reduced time complexity and minimal memory footprint. Before the formal analysis, this section describes the underlying mathematical foundations and the analytical formulations for each component of the model. A comparison of time complexity across models is provided in Table~\ref{tab:Mathematical-Analysis}.
 
 \begin{table}[H]
     \centering
@@ -423,11 +459,13 @@ The primary distinction of the proposed model lies in its reduced time complexit
     \end{tabular}
 \end{table}
 
-\section{Comparison}
+\subsection{Comparison}
 
-Following the methodological framework of this document, a comparative analysis is presented against various machine learning architectures. This evaluation rigorously focuses on time complexity ($\mathcal{O}$), spatial resource allocation (memory footprint), and operational capabilities within high-entropy environments.
+Following the methodology described in this paper, a comparative analysis is presented with various machine learning architectures. This evaluation focuses on time complexity ($\mathcal{O}$), memory complexity (memory footprint), and operational performance in high-entropy environments.
 
-The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}, and ProtoNN \cite{b11}—were chosen based on their established performance in TinyML benchmarks.
+For this comparison, Bonsai \cite{b11}, FastGRNN \cite{b12}, and ProtoNN \cite{b11} were selected based on their reported performance in TinyML benchmarks. Theoretical training and inference time complexity for each model is summarized in Table~\ref{tab:Time-Complexity-Comparation}. Estimated memory usage and inference latency across models are reported in Table~\ref{tab:Estimated-Hardware-Usage-Comparation}.
+
+Finally, a comparison of sentiment classification performance on the SemEval dataset is shown in Table~\ref{tab:NLP-SemEval-Comparation}.
 
 \begin{table}[H]
     \centering
@@ -463,7 +501,7 @@ The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}
         Standard LSTM & $>500$ KB & $13$ sec\\
         \hline
         \multicolumn{3}{p{0.9\linewidth}}{\centering
-        Benchmarks were conducted on a constrained virtualized environment (single-core 64-bit CPU, 1 MB RAM limit) to simulate resource scarcity in embedded systems. The reported latency included the time required for feature preprocessing.
+        Benchmarks were conducted on a constrained virtualized environment (a single-core 64-bit CPU, a 1 MB RAM limit) to simulate resource scarcity in embedded systems. The reported latency includes the time required for feature preprocessing.
         }
     \end{tabular}
 \end{table}
@@ -488,27 +526,27 @@ The selected models for this comparison—Bonsai \cite{b11}, FastGRNN \cite{b12}
 
 \section{Implications and Future Work}
 
-Current ongoing research is focused on extending this uncertainty mechanism from a passive filter to an active learning trigger, a framework tentatively titled \textit{Epsilon Recurrent Feedback for Linear Models}.
+Current research efforts focus on extending this uncertainty mechanism from a passive filtering mechanism to an active learning trigger, a framework referred to as \textit{Epsilon Recurrent Feedback for Linear Models}.
 
-Although current work uses $\epsilon$ to abstain from prediction, future iterations aim to utilize the uncertainty region as a routing signal to bridge the gap between linear and deep representations. The proposed framework envisions a hierarchical architecture in which uncertainty-driven routing enables adaptive model escalation.
+Although the present work uses $\epsilon$ to abstain from prediction, future iterations aim to leverage the uncertainty region as a routing mechanism to bridge the gap between linear and deep model representations. The proposed framework envisions a hierarchical architecture in which uncertainty-driven decision routing enables adaptive escalation to more expressive models.
 
 \begin{itemize}
 
-    \item Selective Escalation: Input vectors falling within the uncertainty margin ($\epsilon$) are not discarded but are instead escalated to a High-Capacity Model (e.g., a Transformer or Large Language Model) acting as a teacher.
+    \item Selective Escalation: Input vectors falling within the uncertainty margin ($\epsilon$) are not discarded; instead, they are escalated to a high-capacity model (e.g., a transformer or large language model) acting as a teacher model.
     
-    \item Closed-Loop Distillation: The high-confidence labels generated by the oracle for these "hard" samples are fed back into the linear model. This creates a continuous knowledge distillation cycle, allowing the simple perceptron to asymptotically approximate the decision boundaries of deeper architectures while maintaining $\mathcal{O}(1)$ inference costs for the majority of traffic.
+    \item Closed-Loop Distillation: The high-confidence labels generated by the teacher model for these difficult samples are fed back into the linear model. This creates a continuous distillation cycle, allowing the simple perceptron to progressively approximate the decision boundaries of more expressive architectures while maintaining fixed-time $\mathcal{O}(1)$ inference costs for the majority of traffic.
     
-    \item Contextual Adaptation: Future work will also explore the integration of context-aware weights using Exponential Moving Averages (EMA) to handle temporal dependencies without the overhead of Recurrent Neural Networks (RNNs).
+    \item Contextual Adaptation: Future work will also explore the integration of context-aware weighting mechanisms using exponential moving averages to handle temporal dependencies without the overhead of recurrent neural networks.
     
 \end{itemize}
 
-Preliminary experiments with this feedback loop in OWASP datasets suggest that it is possible to compress the knowledge of large-scale models into linear weights, effectively solving the "Linear vs. Deep" trade-off for resource-constrained environments.
+Preliminary experiments with this feedback mechanism on datasets derived from OWASP benchmarks suggest the potential to compress the knowledge of high-capacity models into linear weights, thereby addressing the linear–deep trade-off for resource-constrained environments.
 
 \section{Conclusion}
 
-This work presents an uncertainty-aware linear perceptron designed for extreme edge constraints. The model demonstrates a training complexity of $\mathcal{O}(e \cdot n \cdot d)$ and a constant inference cost of $\mathcal{O}(d)$, using $\approx 1$ KB of memory. Furthermore, feature preprocessing remains efficient with an average complexity of $\mathcal{O}(n)$, allowing operation within 100-byte buffers. The results illustrate Cover's theorem in practice, effectively filtering noise in high-entropy environments. 
+This work presented an uncertainty-aware linear perceptron model designed for highly resource-constrained edge environments. The model demonstrated a training complexity of $\mathcal{O}(e \cdot n \cdot d)$ and constant-time inference cost of $\mathcal{O}(d)$, using approximately 1 kB of memory. Furthermore, feature preprocessing exhibited linear complexity $\mathcal{O}(n)$, allowing operations within 100-byte memory buffers. The results empirically illustrate Cover's theorem, effectively suppressing noise in high-entropy environments. 
 
-Crucially, this shows that the model's objective is not universal coverage but rather achieving high precision ($>90\%$) through selective coverage. This approach offers orders-of-magnitude reductions in computational costs compared to RNNs, proving that robust feature engineering coupled with selective linearity is a viable path for reliable TinyML.
+Crucially, the model prioritizes high precision over universal coverage($>90\%$) through selective coverage. This approach offers orders-of-magnitude reductions in computational costs compared to recurrent neural networks, indicating that robust feature engineering coupled with selective linear modeling is a viable path for reliable TinyML deployment.
 
 \section{Acknowledgment}
 
@@ -519,19 +557,19 @@ Acknowledgments omitted for double-blind review.
 GitHub repository omitted for double-blind review.
 
 \begin{thebibliography}{00}
-\bibitem{b1} K. Cho et al., "Learning phrase representations using RNN encoder-decoder for statistical machine translation", 2014.
-\bibitem{b2} T. M. Cover, "Geometrical and statistical properties of systems of linear inequalities with applications in pattern recognition", 1965.
-\bibitem{b3} S. Hochreiter and J. Schmidhuber, "Long Short-Term Memory", 1997.
-\bibitem{b4} A. M. Legendre, "Nouvelles méthodes pour la détermination des orbites des comètes. Courcier", 1805.
-\bibitem{b5} F. T. Liu, K. M. Ting, and Z. H. Zhou, "Isolation forest", 2008.
-\bibitem{b6} M. Minsky and S. Papert, "Perceptrons: An Introduction to Computational Geometry", 1969.
-\bibitem{b7} F. Rosenblatt, "The perceptron: A probabilistic model for information storage and organization in the brain", 1958.
-\bibitem{b8} S. Tuli, G. Casale, and N. R. Jennings, "TranAD: Deep transformer networks for anomaly detection in multivariate time series", 2022.
-\bibitem{b9} C. Cortes and V. Vapnik, "Support-vector networks", Machine Learning, 1995.
-\bibitem{b10} K. Pearson, "Contributions to the Mathematical Theory of Evolution", 1894.
-\bibitem{b11} A. Kumar, S. Goyal, and M. Varma, "Resource-efficient Machine Learning in 2 KB RAM for the Internet of Things", ICML, 2017.
-\bibitem{b12} A. Kusupati et al., "FastGRNN: A Fast, Accurate, Stable and Tiny RNN for Edge Computing", NeurIPS, 2018.
-\bibitem{b13} Y. Geifman and R. El-Yaniv, "Selective classification for deep neural networks", NeurIPS, 2017.
+\bibitem{b1} K. Cho et al., ''Learning phrase representations using RNN encoder-decoder for statistical machine translation,'' in Proc. Conf. Empir. Methods Nat. Lang. Process., Doha, Qatar, Oct. 2014, pp. 1724–-1734.
+\bibitem{b2} T. M. Cover, ''Geometrical and statistical properties of systems of linear inequalities with applications in pattern recognition,'' IEEE Trans. Electron. Comput., vol. EC-14, no. 3, pp. 326--334, June 1965.
+\bibitem{b3} S. Hochreiter and J. Schmidhuber, ''Long Short-Term Memory,'' Neural Comput., vol. 9, no. 8, pp. 1735-–1780.
+\bibitem{b4} A. M. Legendre, ''Nouvelles méthodes pour la détermination des orbites des comètes,'' 1805.
+\bibitem{b5} F. T. Liu, K. M. Ting, and Z. H. Zhou, ''Isolation forest,'' in Proc. IEEE Int. Conf. Data Min., Pisa, Italy, 2008, pp. 413--422.
+\bibitem{b6} M. Minsky and S. Papert, ''Perceptrons: An Introduction to Computational Geometry,'' The MIT Press, 1969.
+\bibitem{b7} F. Rosenblatt, ''The perceptron: A probabilistic model for information storage and organization in the brain,'' Psychol. Rev., vol. 65, no. 6, pp. 386-–408, 1958.
+\bibitem{b8} S. Tuli, G. Casale, and N. R. Jennings, ''TranAD: Deep transformer networks for anomaly detection in multivariate time series,'' in Proc. VLDB Endow., Feb. 2022, pp. 1201--1214.
+\bibitem{b9} C. Cortes and V. Vapnik, ''Support-vector networks,'' Mach. Learn., vol. 20, pp. 273--297, 1995.
+\bibitem{b10} K. Pearson, ''Contributions to the Mathematical Theory of Evolution,'' Philos. Trans. A Math Phys. Eng. Sci., vol. 185, pp. 71-–110, 1894.
+\bibitem{b11} A. Kumar, S. Goyal, and M. Varma, ''Resource-efficient Machine Learning in 2 KB RAM for the Internet of Things,'' in Proc 34th Int. Conf. Mach. Learn., 2017, pp. 1935--1944.
+\bibitem{b12} A. Kusupati et al., ''FastGRNN: A Fast, Accurate, Stable, and Tiny RNN for Edge Computing,'' in Proc. 32nd Annu. Conf. Neural Inf. Process. Syst., Montreal, Canada, Dec. 2018.
+\bibitem{b13} Y. Geifman and R. El-Yaniv, ''Selective classification for deep neural networks,'' in Proc. 31st Annu. Conf. Neural Inf. Process. Syst., Long Beach, CA, USA, Dec. 2017.
 \end{thebibliography}
 
 \end{document}
