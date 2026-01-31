@@ -9,7 +9,6 @@
 \usepackage{xcolor}
 \usepackage{tikz}
 \usepackage{float}
-\usepackage{hyperref}
 
 \def\BibTeX{{\rm B\kern-.05em{\sc i\kern-.025em b}\kern-.08em\kern-.1667em\lower.7ex\hbox{E}\kern-.125emX}}
 
@@ -254,13 +253,13 @@ These datasets were chosen because corporate time-series environments allow the 
 
 \subsubsection{Sentiment Analysis Dataset and Data Preprocessing}
 
-To demonstrate that this model is not limited to long nonstationary data, it was also challenged using a dataset for sentiment analysis, classified as positive (1) or negative (0). The dataset selected for this task was SemEval; \href{https://semeval.github.io/}{https://semeval.github.io/}, which provides sentiment labels for social media text, demonstrating the applicability of the proposed model when applied to natural language processing tasks.
+To demonstrate that this model is not limited to long nonstationary data, it was also challenged using a dataset for sentiment analysis, classified as positive (1) or negative (0). The dataset selected for this task was SemEval; https://semeval.github.io/, which provides sentiment labels for social media text, demonstrating the applicability of the proposed model when applied to natural language processing tasks.
 
 For data preparation, n-grams were used and a corresponding scale was created to normalize the token values between 0 and 1. Finally, for data analysis, techniques similar to those used in convolutional neural networks were applied, where the model operates in a manner similar to a sliding window over the sequence, performing inference depending on the size of the respective input vector.
 
 \subsubsection{Industrial Validation: NASA IMS Bearing Dataset}
 
-To further validate the model in a critical embedded sensing scenario, the NASA IMS Bearing Dataset was used. This task involves  binary classification of bearing condition (healthy (1) vs. faulty (0)) based on vibration accelerometer data; \href{https://data.nasa.gov/dataset/ims-bearings}{https://data.nasa.gov/dataset/ims-bearings}.
+To further validate the model in a critical embedded sensing scenario, the NASA IMS Bearing Dataset was used. This task involves  binary classification of bearing condition (healthy (1) vs. faulty (0)) based on vibration accelerometer data; https://data.nasa.gov/dataset/ims-bearings.
 
 Unlike the stochastic nature of markets, mechanical degradation follows physical laws; however, early fault detection remains challenging owing to signal noise during transitional degradation states. For this task, a low-dimensional input vector is engineered, consisting of root mean square (RMS), harmonic oscillators, sin, cos, kurtosis, crest factor, and skewness, computed over sliding windows.
 
@@ -559,7 +558,7 @@ Appreciations expressed to the NASA Prognostics Center of Excellence for providi
 
 \section{Resources}
 
-To support reproducibility and further research on resource-constrained machine learning, the complete source code for the Uncertainty-Aware Linear Perceptron is available on GitHub: \href{https://github.com/dylan-sutton-chavez/uncertainty-simple-perceptron/blob/main/src/model/perceptron.py}{https://github.com/dylan-sutton-chavez/uncertainty-simple-perceptron/blob/main/src/model/perceptron.py}. The repository includes the implementation of the core model, uncertainty step function and the manual feature engineering pipeline for nonstationary time series.
+To support reproducibility and further research on resource-constrained machine learning, the complete source code for the Uncertainty-Aware Linear Perceptron is available on GitHub: https://github.com/dylan-sutton-chavez/uncertainty-simple-perceptron/blob/main/src/model/perceptron.py. The repository includes the implementation of the core model, uncertainty step function and the manual feature engineering pipeline for nonstationary time series.
 
 \begin{thebibliography}{00}
 \bibitem{b1} K. Cho et al., ``Learning phrase representations using RNN encoder-decoder for statistical machine translation,'' in Proc. Conf. Empir. Methods Nat. Lang. Process., Doha, Qatar, Oct. 2014, pp. 1724–-1734.
